@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Speech Trainer</string>
+    <string name="speechDetectionTitle">Speech detection mode</string>
+    <string name="speechDetecionSummary">Automatically switches between recording and playing.</string>
+    <string name="settingsTitle">Speech Trainer - settings</string>
+    <string name="settingsLink">Settings</string>
+    <string name="aboutTitleSuffix">about</string>
+    <string name="aboutLink">About</string>
+    <string name="helpLink">Help</string>
+    <string name="helpTitleSuffix">help</string>
+</resources>

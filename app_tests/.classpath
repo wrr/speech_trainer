@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="/home/wrr/lib/easymock-3.0/easymock-3.0.jar"/>
+	<classpathentry kind="lib" path="/home/wrr/lib/objenesis-1.2/objenesis-1.2.jar"/>
+	<classpathentry kind="lib" path="/home/wrr/lib/cglib-nodep-2.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/SpeechTrainer"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
