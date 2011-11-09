@@ -89,8 +89,8 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
     // Recently recorded buffers are not added directly to recordedBuffers in
     // order not to invalidate iterator that can be in use by the GUI.
     private final Queue<AudioBufferInfoImpl> recentlyRecordedBuffers = new LinkedList<AudioBufferInfoImpl>();
-    private double maxSoundLevel = 0.0;
-    private double minSoundLevel = Double.MAX_VALUE;
+    private double maxSoundLevel;
+    private double minSoundLevel;
     private AudioBufferInfoImpl firstBufferPlayed = null;
     private AudioBufferInfoImpl lastBufferPlayed = null;
 
@@ -100,6 +100,15 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
      */
     public AudioEventCollector(AudioEventListener nextListener) {
         this.nextListener = nextListener;
+        resetHistory();
+    }
+
+    @Override
+    public void resetHistory() {
+        maxSoundLevel = 0.0;
+        minSoundLevel = Double.MAX_VALUE;
+        recentlyRecordedBuffers.clear();
+        recordedBuffers.clear();
     }
 
     @Override

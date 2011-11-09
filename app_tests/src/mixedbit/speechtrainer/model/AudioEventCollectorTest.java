@@ -21,7 +21,6 @@ package mixedbit.speechtrainer.model;
 import java.util.Iterator;
 
 import junit.framework.TestCase;
-
 import mixedbit.speechtrainer.controller.AudioEventListener;
 
 import org.easymock.EasyMock;
@@ -105,6 +104,21 @@ public class AudioEventCollectorTest extends TestCase {
         assertEquals(eventsCount, iteratedEventsCount);
     }
 
+    public void testResetHistory() {
+        audioEventCollector.recordingStarted();
+        audioEventCollector.audioBufferRecorded(0, 156.0);
+        audioEventCollector.audioBufferRecorded(1, 12.0);
+        assertEquals(12.0, audioEventCollector.getMinSoundLevel(), DELTA);
+        assertEquals(156.0, audioEventCollector.getMaxSoundLevel(), DELTA);
+        assertTrue(audioEventCollector.getIteratorOverAudioEventsToPlot(1).hasNext());
+
+        audioEventCollector.resetHistory();
+        // Make sure information about two recorded buffers is removed.
+        assertEquals(Double.MAX_VALUE, audioEventCollector.getMinSoundLevel(), DELTA);
+        assertEquals(0.0, audioEventCollector.getMaxSoundLevel(), DELTA);
+        assertFalse(audioEventCollector.getIteratorOverAudioEventsToPlot(1).hasNext());
+    }
+
     public void testHistorySizeRespectedOldEventsRemoved() {
         final int eventsCount = 2 * AudioEventCollector.HISTORY_SIZE;
         audioEventCollector.recordingStarted();
@@ -178,7 +192,7 @@ public class AudioEventCollectorTest extends TestCase {
         audioEventCollector.playingStopped();
 
         Iterator<? extends AudioBufferInfo> it = audioEventCollector
-                .getIteratorOverAudioEventsToPlot(10);
+        .getIteratorOverAudioEventsToPlot(10);
         AudioBufferInfo audioBufferInfo = it.next();
         assertEquals(3, audioBufferInfo.getAudioBufferId());
         assertFalse(audioBufferInfo.isPlayed());

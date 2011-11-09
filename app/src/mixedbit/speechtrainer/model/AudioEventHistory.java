@@ -20,10 +20,10 @@ package mixedbit.speechtrainer.model;
 
 import java.util.Iterator;
 
-
 /**
- * Stores and manages information about played buffers for displaying in the UI.
- * Provides an iterator pointing at the first buffer to be plotted.
+ * Stores and manages information about recorded and played buffers for
+ * displaying in the UI. Provides an iterator pointing at the first buffer to be
+ * plotted.
  */
 public interface AudioEventHistory {
 
@@ -51,4 +51,10 @@ public interface AudioEventHistory {
      *         next call to the getIteratorOverAudioEventsToPlot.
      */
     public Iterator<? extends AudioBufferInfo> getIteratorOverAudioEventsToPlot(int plotWidth);
+
+    /**
+     * Clears the history of recorded and played buffers. Resets min and max
+     * sound levels.
+     */
+    public void resetHistory();
 }
