@@ -26,6 +26,8 @@ import mixedbit.speechtrainer.controller.InteractiveTrainingController;
 import mixedbit.speechtrainer.controller.TrainingController;
 import mixedbit.speechtrainer.model.AudioEventCollector;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -53,11 +55,19 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
     private InteractiveTrainingController interactiveTrainingController;
     private SharedPreferences preferences;
 
-    // private void alert(String alertMessage) {
-    // AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    // builder.setMessage(alertMessage);
-    // builder.create().show();
-    // }
+    private void displayErrorAndFinishActivity(String errorMessage) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(errorMessage);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.closeButton, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                TrainingActivity.this.setResult(RESULT_CANCELED);
+                TrainingActivity.this.finish();
+            }
+        });
+        builder.create().show();
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -83,10 +93,15 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
 
         // Controllers need to pass audio events to the audioEventCollector. The
         // collector will pass them further to the audioEventView.
-        automaticTrainingController =
-            controllerFactory.createAutomaticTrainingController(audioEventCollector);
-        interactiveTrainingController =
-            controllerFactory.createInteractiveTrainingController(audioEventCollector);
+        try {
+            automaticTrainingController =
+                controllerFactory.createAutomaticTrainingController(audioEventCollector);
+            interactiveTrainingController =
+                controllerFactory.createInteractiveTrainingController(audioEventCollector);
+        } catch (final ControllerFactory.InitializationException ex) {
+            displayErrorAndFinishActivity(ex.getMessage());
+            return;
+        }
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         // Get notification when preferences change. Preferences determine which
@@ -158,13 +173,18 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
     @Override
     protected void onResume() {
         super.onResume();
-        activeTrainingController.startTraining();
+        // Can be null when the controller initialization failed.
+        if (activeTrainingController != null) {
+            activeTrainingController.startTraining();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        activeTrainingController.stopTraining();
+        if (activeTrainingController != null) {
+            activeTrainingController.stopTraining();
+        }
     }
 
     @Override
@@ -175,8 +195,10 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        // Training can be safely stopped even if it is not started.
-        activeTrainingController.stopTraining();
+        if (activeTrainingController != null) {
+            // Training can be safely stopped even if it is not started.
+            activeTrainingController.stopTraining();
+        }
         configureActiveSession();
     }
     /**

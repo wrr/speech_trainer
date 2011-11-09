@@ -36,6 +36,14 @@ import android.util.Log;
  * started simultaneously.
  */
 public class ControllerFactory {
+    public class InitializationException extends Exception {
+        private static final long serialVersionUID = -4092114494178018622L;
+
+        public InitializationException(String detailMessage) {
+            super(detailMessage);
+        }
+    }
+
     // Objects that are reused between successive controllers to avoid
     // reallocations of large buffers and recreation of an executor thread.
     private final AudioBufferAllocator audioBufferAllocator;
@@ -48,8 +56,6 @@ public class ControllerFactory {
                 SpeechTrainerConfig.NUMBER_OF_AUDIO_BUFFERS,
                 SpeechTrainerConfig.SINGLE_AUDIO_BUFFER_SIZE_IN_SHORTS);
         executor = Executors.newSingleThreadExecutor();
-        createAudioRecord();
-        createAudioTrack();
     }
 
     /**
@@ -58,9 +64,15 @@ public class ControllerFactory {
      *            created controller.
      */
     public InteractiveTrainingController createInteractiveTrainingController(
-            AudioEventListener audioEventListener) {
-        final Player player = new PlayerImpl(audioTrack, audioEventListener);
+            AudioEventListener audioEventListener) throws InitializationException {
+        if (audioRecord == null) {
+            createAudioRecord();
+        }
+        if (audioTrack == null) {
+            createAudioTrack();
+        }
         final Recorder recorder = new RecorderImpl(audioRecord, audioEventListener);
+        final Player player = new PlayerImpl(audioTrack, audioEventListener);
         final RecordPlayTaskManager recordPlayTaskManager = new RecordPlayTaskManager(recorder,
                 player, executor, RecordPlayTaskPriority.HIGH);
         return new InteractiveTrainingController(recordPlayTaskManager, audioBufferAllocator);
@@ -72,8 +84,13 @@ public class ControllerFactory {
      *            created controller.
      */
     public AutomaticTrainingController createAutomaticTrainingController(
-            AudioEventListener audioEventListener) {
-        // TODO: add and test exception when player or recorder not created.
+            AudioEventListener audioEventListener) throws InitializationException {
+        if (audioRecord == null) {
+            createAudioRecord();
+        }
+        if (audioTrack == null) {
+            createAudioTrack();
+        }
         final Player player = new PlayerImpl(audioTrack, audioEventListener);
         final Recorder recorder = new RecorderImpl(audioRecord, audioEventListener);
         final RecordPlayTaskManager recordPlayTaskManager = new RecordPlayTaskManager(recorder,
@@ -82,21 +99,7 @@ public class ControllerFactory {
                 new SilenceLevelDetector()), audioBufferAllocator);
     }
 
-    private void createAudioTrack() {
-        // TODO: adjust buffer size.
-        final int minBufferSize = AudioTrack.getMinBufferSize(SpeechTrainerConfig.SAMPLE_RATE_HZ,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        // ENCODING_PCM_16BIT guaranteed to be supported.
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SpeechTrainerConfig.SAMPLE_RATE_HZ,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize,
-                AudioTrack.MODE_STREAM);
-        if (audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
-            Log.e(SpeechTrainerConfig.LOG_TAG, "Player not initialized.");
-            audioTrack = null;
-        }
-    }
-
-    private void createAudioRecord() {
+    private void createAudioRecord() throws InitializationException {
         final int audioRecordBufferSize = AudioRecord.getMinBufferSize(
                 SpeechTrainerConfig.SAMPLE_RATE_HZ, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
@@ -106,8 +109,25 @@ public class ControllerFactory {
         audioRecord = new AudioRecord(AudioSource.MIC, SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, audioRecordBufferSize);
         if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-            Log.e(SpeechTrainerConfig.LOG_TAG, "Recorder not initialized.");
             audioRecord = null;
+            throw new InitializationException("Failed to initialize recording.");
         }
     }
+
+    private void createAudioTrack() throws InitializationException {
+        // TODO: adjust buffer size.
+        final int minBufferSize = AudioTrack.getMinBufferSize(SpeechTrainerConfig.SAMPLE_RATE_HZ,
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        // ENCODING_PCM_16BIT guaranteed to be supported.
+        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                SpeechTrainerConfig.SAMPLE_RATE_HZ,
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize,
+                AudioTrack.MODE_STREAM);
+        if (audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
+            audioTrack = null;
+            throw new InitializationException("Failed to initialize playback.");
+        }
+    }
+
+
 }

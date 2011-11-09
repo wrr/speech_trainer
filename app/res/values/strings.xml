@@ -9,4 +9,5 @@
     <string name="aboutLink">About</string>
     <string name="helpLink">Help</string>
     <string name="helpTitleSuffix">help</string>
+    <string name="closeButton">Close</string>
 </resources>
