@@ -28,7 +28,6 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder.AudioSource;
-import android.util.Log;
 
 /**
  * Creates training controllers. It is OK to create multiple controllers with
@@ -100,10 +99,15 @@ public class ControllerFactory {
     }
 
     private void createAudioRecord() throws InitializationException {
+        // The AudioRecord configurations parameters used here, are guaranteed
+        // to be supported on all devices.
+
+        // Unlike AudioTrack buffer, AudioRecord buffer could be larger than
+        // minimum without causing any problems. But minimum works well.
         final int audioRecordBufferSize = AudioRecord.getMinBufferSize(
                 SpeechTrainerConfig.SAMPLE_RATE_HZ, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        Log.i(SpeechTrainerConfig.LOG_TAG, "Recording buffer size " + audioRecordBufferSize);
+
         // CHANNEL_IN_MONO is guaranteed to work on all devices.
         // ENCODING_PCM_16BIT is guaranteed to work on all devices.
         audioRecord = new AudioRecord(AudioSource.MIC, SpeechTrainerConfig.SAMPLE_RATE_HZ,
@@ -115,13 +119,22 @@ public class ControllerFactory {
     }
 
     private void createAudioTrack() throws InitializationException {
-        // TODO: adjust buffer size.
-        final int minBufferSize = AudioTrack.getMinBufferSize(SpeechTrainerConfig.SAMPLE_RATE_HZ,
+        // The AudioTrack configurations parameters used here, are guaranteed to
+        // be supported on all devices.
+
+        // Output buffer for playing should be as small as possible, so
+        // AudioBufferPlayed events are not invoked long before audio buffer is
+        // actually played. Also, after AudioTrack.stop() returns, data that is
+        // left in the output buffer is asynchronously played. This would cause
+        // AudioRecord that was started after AudioTrack was stopped to record
+        // part of this data if the output buffer was large.
+        final int audioTrackBufferSize = AudioTrack.getMinBufferSize(
+                SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        // ENCODING_PCM_16BIT guaranteed to be supported.
+
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize,
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, audioTrackBufferSize,
                 AudioTrack.MODE_STREAM);
         if (audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
             audioTrack = null;

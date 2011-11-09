@@ -85,7 +85,7 @@ public class AutomaticTrainingController implements TrainingController, RecordPl
             // No more audio buffers, play all recorded data to free memory.
             return RecordPlayTaskState.PLAY;
         }
-        if (!recorder.recordAudioBuffer(audioBuffer)) {
+        if (!recorder.readAudioBuffer(audioBuffer)) {
             audioBufferAllocator.releaseAudioBuffer(audioBuffer);
             return RecordPlayTaskState.TERMINATE;
         }
@@ -118,7 +118,7 @@ public class AutomaticTrainingController implements TrainingController, RecordPl
     public RecordPlayTaskState handlePlay(Player player) {
         final AudioBuffer bufferToPlay = recordedBuffers.pollFirst();
         if (bufferToPlay != null) {
-            player.playAudioBuffer(bufferToPlay);
+            player.writeAudioBuffer(bufferToPlay);
             audioBufferAllocator.releaseAudioBuffer(bufferToPlay);
             return RecordPlayTaskState.PLAY;
         } else {

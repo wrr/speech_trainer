@@ -105,7 +105,7 @@ public class InteractiveTrainingController implements TrainingController, Record
         if (audioBuffer == null) {
             return RecordPlayTaskState.TERMINATE;
         }
-        if (!recorder.recordAudioBuffer(audioBuffer)) {
+        if (!recorder.readAudioBuffer(audioBuffer)) {
             audioBufferAllocator.releaseAudioBuffer(audioBuffer);
             return RecordPlayTaskState.TERMINATE;
         }
@@ -122,7 +122,7 @@ public class InteractiveTrainingController implements TrainingController, Record
     @Override
     public RecordPlayTaskState handlePlay(Player player) {
         if (nextBufferToPlay.hasNext()) {
-            player.playAudioBuffer(nextBufferToPlay.next());
+            player.writeAudioBuffer(nextBufferToPlay.next());
             return RecordPlayTaskState.PLAY;
         } else {
             return RecordPlayTaskState.TERMINATE;

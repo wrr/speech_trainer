@@ -31,17 +31,18 @@ import android.media.AudioRecord;
 interface Recorder {
 
     /**
-     * Starts recording. Calls to recordAudioBuffer are allowed only after
+     * Starts recording. Calls to readAudioBuffer are allowed only after
      * recording was started.
      */
     public abstract void startRecording();
 
     /**
-     * Blocking call that records an audio buffer. Requires recording to be
-     * started (startRecording called). Returns false if recording failed (this
-     * happens for instance when microphone is used by some other application).
+     * Reads recorded audio buffer. Requires recording to be started
+     * (startRecording called). Can block until there is enough audio data
+     * recorded. Returns false if recording failed (this happens for instance
+     * when microphone is used by some other application).
      */
-    public abstract boolean recordAudioBuffer(AudioBuffer audioBuffer);
+    public abstract boolean readAudioBuffer(AudioBuffer audioBuffer);
 
     /**
      * Stops recording. Recording can be started again with the startRecording
@@ -74,7 +75,7 @@ class RecorderImpl implements Recorder {
     }
 
     @Override
-    public boolean recordAudioBuffer(AudioBuffer audioBuffer) {
+    public boolean readAudioBuffer(AudioBuffer audioBuffer) {
         final short[] audioData = audioBuffer.getAudioData();
         final int dataRead = audioRecord.read(audioData, 0, audioData.length);
         if (dataRead <= 0) {

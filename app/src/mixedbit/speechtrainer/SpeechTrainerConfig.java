@@ -30,7 +30,7 @@ public class SpeechTrainerConfig {
     // * 2 * NUMBER_OF_AUDIO_BUFFERS = ~6MB. The maximum time of recording is
     // SINGLE_AUDIO_BUFFER_SIZE_IN_SHORTS * NUMBER_OF_AUDIO_BUFFERS /
     // SAMPLE_RATE_HZ seconds = ~68 seconds. Should be more than enough for
-    // speech training purposes.
+    // the speech training purposes.
     public static final int SINGLE_AUDIO_BUFFER_SIZE_IN_SHORTS = 1000;
     public static final int NUMBER_OF_AUDIO_BUFFERS = 3000;
 

@@ -32,16 +32,17 @@ import android.media.AudioTrack;
 interface Player {
 
     /**
-     * Starts playing. Calls to playAudioBuffer are allowed only after playing
+     * Starts playing. Calls to writeAudioBuffer are allowed only after playing
      * was started.
      */
     public abstract void startPlaying();
 
     /**
-     * Blocking call that plays an audio buffer. Requires playing to be started
-     * (startPlaying called).
+     * Writes an audio buffer to be played. Requires playing to be started
+     * (startPlaying called). Audio data is copied to an output buffer and
+     * played asynchronously. Can block if an output buffer is full.
      */
-    public abstract void playAudioBuffer(AudioBuffer audioBuffer);
+    public abstract void writeAudioBuffer(AudioBuffer audioBuffer);
 
     /**
      * Stops playing. Playing can be started again with the startPlaying method.
@@ -73,7 +74,7 @@ class PlayerImpl implements Player {
     }
 
     @Override
-    public void playAudioBuffer(AudioBuffer audioBuffer) {
+    public void writeAudioBuffer(AudioBuffer audioBuffer) {
         audioTrack.write(audioBuffer.getAudioData(), 0, audioBuffer.getAudioDataLengthInShorts());
         audioEventListener.audioBufferPlayed(
                 audioBuffer.getAudioBufferId(), audioBuffer.getSoundLevel());
@@ -81,6 +82,12 @@ class PlayerImpl implements Player {
 
     @Override
     public void stopPlaying() {
+        // Surprisingly, none of the two calls bellow synchronously stops
+        // playing. AudioTrack asynchronously finishes playing data that is left
+        // in the output buffer and can do it after flush and stop returned.
+        // This is one of the reasons why the AudioTrack output buffer
+        // should be small.
+        audioTrack.flush();
         audioTrack.stop();
         this.audioEventListener.playingStopped();
     }

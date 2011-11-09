@@ -31,14 +31,14 @@ import org.easymock.IMocksControl;
 public abstract class TrainingControllerTest extends TestCase {
     /**
      * Fake recorder that sets unique, monotonically increasing number as an
-     * audio data when recordAudioBuffer is called. Makes sure startRecording
-     * and stopRecording are never called (RecordPlayTaskManager is responsible
-     * for calling these). Keeps track of the total number of recorded buffers.
+     * audio data when readAudioBuffer is called. Makes sure startRecording and
+     * stopRecording are never called (RecordPlayTaskManager is responsible for
+     * calling these). Keeps track of the total number of recorded buffers.
      */
     protected class TestRecorder implements Recorder {
         private short recordedBuffersCount = 0;
         private double lastRecordedAudioBufferSoundLevel = -1.0;
-        private boolean recordAudioBufferResult = true;
+        private boolean readAudioBufferResult = true;
 
         @Override
         public void startRecording() {
@@ -46,14 +46,14 @@ public abstract class TrainingControllerTest extends TestCase {
         }
 
         @Override
-        public boolean recordAudioBuffer(AudioBuffer audioBuffer) {
+        public boolean readAudioBuffer(AudioBuffer audioBuffer) {
             assertTrue(audioBuffer.getAudioData().length == AUDIO_BUFFER_SIZE);
             audioBuffer.getAudioData()[0] = recordedBuffersCount;
             audioBuffer.audioDataStored(1);
             lastRecordedAudioBufferSoundLevel = audioBuffer.getSoundLevel();
             assertTrue(Short.MAX_VALUE != recordedBuffersCount);
             recordedBuffersCount += 1;
-            return recordAudioBufferResult;
+            return readAudioBufferResult;
         }
 
         @Override
@@ -61,8 +61,8 @@ public abstract class TrainingControllerTest extends TestCase {
             fail("stopRecording should not be called by TrainingController.");
         }
 
-        public void setRecordAudioBufferResult(boolean recordAudioBufferResult) {
-            this.recordAudioBufferResult = recordAudioBufferResult;
+        public void setReadAudioBufferResult(boolean readAudioBufferResult) {
+            this.readAudioBufferResult = readAudioBufferResult;
         }
 
         public short getRecordedBuffersCount() {
@@ -95,7 +95,7 @@ public abstract class TrainingControllerTest extends TestCase {
         }
 
         @Override
-        public void playAudioBuffer(AudioBuffer audioBuffer) {
+        public void writeAudioBuffer(AudioBuffer audioBuffer) {
             assertTrue(audioBuffer.getAudioData().length == AUDIO_BUFFER_SIZE);
             copyRecordedAudioData(audioBuffer);
             assertTrue(Short.MAX_VALUE != playedBuffersCount);

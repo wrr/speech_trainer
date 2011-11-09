@@ -159,7 +159,7 @@ public class InteractiveTrainingControllerTest extends TrainingControllerTest {
         verifyAll();
     }
 
-    public void testRecordingTerminatesWhenRecordAudioBufferFails() {
+    public void testRecordingTerminatesWhenReadAudioBufferFails() {
         mockRecordPlayTaskManager.terminateTaskIfRunning();
         mockRecordPlayTaskManager.startTask(RecordPlayTaskState.RECORD, trainingController);
         replayAll();
@@ -167,9 +167,9 @@ public class InteractiveTrainingControllerTest extends TrainingControllerTest {
         trainingController.startTraining();
         trainingController.record();
         assertEquals(RecordPlayTaskState.RECORD, trainingController.handleRecord(testRecorder));
-        // The next recordAudioBuffer call should fail and handleRecord should
+        // The next readAudioBuffer call should fail and handleRecord should
         // request RecordPlayTask to terminate.
-        testRecorder.setRecordAudioBufferResult(false);
+        testRecorder.setReadAudioBufferResult(false);
         assertEquals(RecordPlayTaskState.TERMINATE, trainingController.handleRecord(testRecorder));
 
         verifyAll();

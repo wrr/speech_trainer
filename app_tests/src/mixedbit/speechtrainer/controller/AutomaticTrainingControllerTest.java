@@ -162,7 +162,7 @@ public class AutomaticTrainingControllerTest extends TrainingControllerTest {
         verifyAll();
     }
 
-    public void testRecordingTerminatesWhenRecordAudioBufferFails() {
+    public void testRecordingTerminatesWhenReadAudioBufferFails() {
         expectTrainingStarted();
         // Configure the silence filter to accept any buffer.
         EasyMock.expect(
@@ -171,9 +171,9 @@ public class AutomaticTrainingControllerTest extends TrainingControllerTest {
         replayAll();
         trainingController.startTraining();
         assertEquals(RecordPlayTaskState.RECORD, trainingController.handleRecord(testRecorder));
-        // The next recordAudioBuffer call should fail and handleRecord should
+        // The next readAudioBuffer call should fail and handleRecord should
         // request RecordPlayTask to terminate.
-        testRecorder.setRecordAudioBufferResult(false);
+        testRecorder.setReadAudioBufferResult(false);
         assertEquals(RecordPlayTaskState.TERMINATE, trainingController.handleRecord(testRecorder));
         verifyAll();
     }
