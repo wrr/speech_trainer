@@ -20,6 +20,7 @@ package mixedbit.speechtrainer.view;
 
 import mixedbit.speechtrainer.R;
 import mixedbit.speechtrainer.TrainingApplication;
+import mixedbit.speechtrainer.controller.AudioEventListener;
 import mixedbit.speechtrainer.controller.AutomaticTrainingController;
 import mixedbit.speechtrainer.controller.ControllerFactory;
 import mixedbit.speechtrainer.controller.InteractiveTrainingController;
@@ -44,17 +45,205 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 /**
- * Interacts with the user during the training session.
+ * Interacts with the user during the training session. Updates the UI in
+ * response to audio events.
  */
-public class TrainingActivity extends Activity implements OnSharedPreferenceChangeListener {
-    private ImageButton recordButton;
-    private ImageButton replayButton;
-    private View horizontalDividerView;
+public class TrainingActivity extends Activity implements OnSharedPreferenceChangeListener,
+AudioEventListener {
+    // Preferences that determine whether the training should be interactive or
+    // automatic.
+    private SharedPreferences sharedPreferences;
+
+    // Set to be automaticTrainingController or interactiveTrainingController
+    // depending on sharedPreferences.
     private TrainingController activeTrainingController;
     private AutomaticTrainingController automaticTrainingController;
     private InteractiveTrainingController interactiveTrainingController;
-    private SharedPreferences preferences;
+
+    // Collects the history of audio events and passes audio events to
+    // the TrainingActivity.
     private AudioEventCollector audioEventCollector;
+    // Plots recently recorded and played buffers. Invalidated each time a new
+    // buffer is recorded or played.
+    private AudioEventView audioEventView;
+    // View that is enabled when recording starts and disabled when recording
+    // ends.
+    private ImageView recordStatusView;
+    // Elements that are used only during interactive training (recordButton is
+    // actually audioEventView, alias is provided for clarity).
+    private ImageButton recordButton;
+    private View horizontalDividerView;
+    private ImageButton replayButton;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // TODO: Attribute minSdkVersion (3) is lower than the project target
+        // API level (10)
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.training);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        recordStatusView = (ImageView) findViewById(R.id.recordStatusView);
+        recordStatusView.setEnabled(false);
+
+        // audioEvenCollector should pass received audio events to this
+        // activity.
+        audioEventCollector = new AudioEventCollector(this);
+
+        audioEventView = (AudioEventView) findViewById(R.id.recordButton);
+        // The audioEventCollector provides history of events to be displayed in
+        // the audioEventView.
+        audioEventView.setAudioEventHistory(audioEventCollector);
+
+        final TrainingApplication application = (TrainingApplication) getApplication();
+        final ControllerFactory controllerFactory = application.getControllerFactory();
+
+        // Controllers need to pass audio events to the audioEventCollector. The
+        // collector will pass them further to the TrainingApplication.
+        try {
+            automaticTrainingController = controllerFactory
+            .createAutomaticTrainingController(audioEventCollector);
+            interactiveTrainingController = controllerFactory
+            .createInteractiveTrainingController(audioEventCollector);
+        } catch (final ControllerFactory.InitializationException ex) {
+            displayErrorAndFinishActivity(ex.getMessage());
+            return;
+        }
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        // Get notification when preferences change. Preferences determine which
+        // training controller should be used.
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+
+        // The whole area in which audio events are plotted is a record button.
+        recordButton = audioEventView;
+        replayButton = (ImageButton) findViewById(R.id.replayButton);
+
+        horizontalDividerView = findViewById(R.id.horizontalDividerView);
+
+        configureButtons();
+        configureActiveSession();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Can be null when the controller initialization failed.
+        if (activeTrainingController != null) {
+            activeTrainingController.startTraining();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopTraining();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        // Training can be safely stopped even if it is not started.
+        stopTraining();
+        configureActiveSession();
+    }
+
+    /**
+     * Display an activity select by the user in the options menu.
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.settingsMenuItem:
+                startActivity(new Intent(this, TrainingPreferenceActivity.class));
+                break;
+            case R.id.helpMenuItem:
+                final Intent helpIntent = new Intent(this, FileViewerActivity.class);
+                helpIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY, "help.html");
+                helpIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
+                        getString(R.string.helpTitleSuffix));
+                startActivity(helpIntent);
+                break;
+            case R.id.aboutMenuItem:
+                final Intent aboutIntent = new Intent(this, FileViewerActivity.class);
+                aboutIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY, "about.html");
+                aboutIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
+                        getString(R.string.aboutTitleSuffix));
+                startActivity(aboutIntent);
+                break;
+
+        }
+        return true;
+    }
+
+    @Override
+    public void playingStarted() {
+    }
+
+    @Override
+    public void playingStopped() {
+    }
+
+    // Request the plot with audio events to be redrawn when a buffer is played
+    // or recorded.
+    @Override
+    public void audioBufferPlayed(int audioBufferId, double soundLevel) {
+        audioEventView.postInvalidate();
+    }
+
+    @Override
+    public void audioBufferRecorded(int audioBufferId, double soundLevel) {
+        audioEventView.postInvalidate();
+    }
+
+
+    // recordStatusView should be enabled only when recording is in progress.
+    @Override
+    public void recordingStarted() {
+        recordStatusView.post(new Runnable() {
+            @Override
+            public void run() {
+                recordStatusView.setEnabled(true);
+            }
+        });
+    }
+
+    @Override
+    public void recordingStopped() {
+        recordStatusView.post(new Runnable() {
+            @Override
+            public void run() {
+                recordStatusView.setEnabled(false);
+            }
+        });
+    }
+
+    // When recording fails, the TrainingActivity is terminated.
+    @Override
+    public void audioBufferRecordingFailed() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                displayErrorAndFinishActivity("Recording failed. "
+                        + "Please make sure no other application is using the microphone.");
+            }
+        });
+    }
+
+    private void stopTraining() {
+        if (activeTrainingController != null) {
+            activeTrainingController.stopTraining();
+            // Clear the history of audio events. Keeping old audio events on
+            // the screen would be misleading, because the old events can no be
+            // played after the training was stopped.
+            audioEventCollector.resetHistory();
+        }
+    }
 
     private void displayErrorAndFinishActivity(String errorMessage) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -68,53 +257,6 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
             }
         });
         builder.create().show();
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        // TODO: Attribute minSdkVersion (3) is lower than the project target
-        // API level (10)
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.training);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-
-        final AudioEventView audioEventView = (AudioEventView) findViewById(R.id.recordButton);
-        final ImageView recordStatusView = (ImageView) findViewById(R.id.recordStatusView);
-        audioEventView.setRecordStatusView(recordStatusView);
-        audioEventCollector = new AudioEventCollector(audioEventView);
-        // AudioEventCollector provides history of events to be displayed in
-        // AudioEventView.
-        audioEventView.setAudioEventHistory(audioEventCollector);
-
-        final TrainingApplication application = (TrainingApplication) getApplication();
-        final ControllerFactory controllerFactory = application.getControllerFactory();
-
-        // Controllers need to pass audio events to the audioEventCollector. The
-        // collector will pass them further to the audioEventView.
-        try {
-            automaticTrainingController = controllerFactory
-            .createAutomaticTrainingController(audioEventCollector);
-            interactiveTrainingController = controllerFactory
-            .createInteractiveTrainingController(audioEventCollector);
-        } catch (final ControllerFactory.InitializationException ex) {
-            displayErrorAndFinishActivity(ex.getMessage());
-            return;
-        }
-
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        // Get notification when preferences change. Preferences determine which
-        // training controller should be used.
-        preferences.registerOnSharedPreferenceChangeListener(this);
-
-        // The whole area in which audio events are plotted is a record button.
-        recordButton = audioEventView;
-        replayButton = (ImageButton) findViewById(R.id.replayButton);
-
-        horizontalDividerView = findViewById(R.id.horizontalDividerView);
-
-        configureButtons();
-        configureActiveSession();
     }
 
     private void configureButtons() {
@@ -147,8 +289,8 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
      * should be active and configures controls needed in the select mode.
      */
     private void configureActiveSession() {
-        final boolean speechDetectionMode =
-            this.preferences.getBoolean("speechDetectionMode", true);
+        final boolean speechDetectionMode = this.sharedPreferences.getBoolean(
+                "speechDetectionMode", true);
         if (speechDetectionMode) {
             activeTrainingController = automaticTrainingController;
         } else {
@@ -159,6 +301,8 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
 
     private void configureControlsAccordingToMode(boolean speechDetectionMode) {
         if (speechDetectionMode) {
+            // recordButton is not hidden because it acts also as
+            // the AudioEventView.
             recordButton.setEnabled(false);
             replayButton.setVisibility(View.GONE);
             horizontalDividerView.setVisibility(View.GONE);
@@ -169,65 +313,4 @@ public class TrainingActivity extends Activity implements OnSharedPreferenceChan
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Can be null when the controller initialization failed.
-        if (activeTrainingController != null) {
-            activeTrainingController.startTraining();
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopTraining();
-    }
-
-    private void stopTraining() {
-        if (activeTrainingController != null) {
-            activeTrainingController.stopTraining();
-            audioEventCollector.resetHistory();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-        return true;
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        // Training can be safely stopped even if it is not started.
-        stopTraining();
-        configureActiveSession();
-    }
-    /**
-     * Display an activity select by the user in the options menu.
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.settingsMenuItem:
-                startActivity(new Intent(this, TrainingPreferenceActivity.class));
-                break;
-            case R.id.helpMenuItem:
-                final Intent helpIntent = new Intent(this, FileViewerActivity.class);
-                helpIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY, "help.html");
-                helpIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
-                        getString(R.string.helpTitleSuffix));
-                startActivity(helpIntent);
-                break;
-            case R.id.aboutMenuItem:
-                final Intent aboutIntent = new Intent(this, FileViewerActivity.class);
-                aboutIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY, "about.html");
-                aboutIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
-                        getString(R.string.aboutTitleSuffix));
-                startActivity(aboutIntent);
-                break;
-
-        }
-        return true;
-    }
 }

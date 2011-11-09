@@ -163,6 +163,11 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
     }
 
     @Override
+    public void audioBufferRecordingFailed() {
+        nextListener.audioBufferRecordingFailed();
+    }
+
+    @Override
     public synchronized double getMinSoundLevel() {
         return minSoundLevel;
     }

@@ -18,8 +18,6 @@
 
 package mixedbit.speechtrainer.controller;
 
-import mixedbit.speechtrainer.controller.InteractiveTrainingController;
-import mixedbit.speechtrainer.controller.TrainingController;
 import mixedbit.speechtrainer.controller.RecordPlayTaskManager.RecordPlayTaskState;
 
 public class InteractiveTrainingControllerTest extends TrainingControllerTest {
@@ -161,6 +159,21 @@ public class InteractiveTrainingControllerTest extends TrainingControllerTest {
         verifyAll();
     }
 
+    public void testRecordingTerminatesWhenRecordAudioBufferFails() {
+        mockRecordPlayTaskManager.terminateTaskIfRunning();
+        mockRecordPlayTaskManager.startTask(RecordPlayTaskState.RECORD, trainingController);
+        replayAll();
+
+        trainingController.startTraining();
+        trainingController.record();
+        assertEquals(RecordPlayTaskState.RECORD, trainingController.handleRecord(testRecorder));
+        // The next recordAudioBuffer call should fail and handleRecord should
+        // request RecordPlayTask to terminate.
+        testRecorder.setRecordAudioBufferResult(false);
+        assertEquals(RecordPlayTaskState.TERMINATE, trainingController.handleRecord(testRecorder));
+
+        verifyAll();
+    }
     public void testRecordingDiscardsAllPreviouslyRecordedAudioData() {
         // Start recording task twice and make sure that data recorded by the
         // first task is discarded when the second task is started.

@@ -18,10 +18,8 @@
 
 package mixedbit.speechtrainer.controller;
 
-import mixedbit.speechtrainer.SpeechTrainerConfig;
 import mixedbit.speechtrainer.controller.AudioBufferAllocator.AudioBuffer;
 import android.media.AudioRecord;
-import android.util.Log;
 
 /**
  * Wrapper over AudioRecord that exposes minimal interface for recording
@@ -40,9 +38,10 @@ interface Recorder {
 
     /**
      * Blocking call that records an audio buffer. Requires recording to be
-     * started (startRecording called).
+     * started (startRecording called). Returns false if recording failed (this
+     * happens for instance when microphone is used by some other application).
      */
-    public abstract void recordAudioBuffer(AudioBuffer audioBuffer);
+    public abstract boolean recordAudioBuffer(AudioBuffer audioBuffer);
 
     /**
      * Stops recording. Recording can be started again with the startRecording
@@ -75,17 +74,19 @@ class RecorderImpl implements Recorder {
     }
 
     @Override
-    public void recordAudioBuffer(AudioBuffer audioBuffer) {
+    public boolean recordAudioBuffer(AudioBuffer audioBuffer) {
         final short[] audioData = audioBuffer.getAudioData();
         final int dataRead = audioRecord.read(audioData, 0, audioData.length);
         if (dataRead <= 0) {
-            Log.e(SpeechTrainerConfig.LOG_TAG, "Negative size of recorded data " + dataRead);
             audioBuffer.audioDataStored(0);
+            audioEventListener.audioBufferRecordingFailed();
+            return false;
         } else {
             audioBuffer.audioDataStored(dataRead);
+            audioEventListener.audioBufferRecorded(audioBuffer.getAudioBufferId(), audioBuffer
+                    .getSoundLevel());
+            return true;
         }
-        audioEventListener.audioBufferRecorded(
-                audioBuffer.getAudioBufferId(), audioBuffer.getSoundLevel());
     }
 
     @Override

@@ -94,8 +94,8 @@ public class InteractiveTrainingController implements TrainingController, Record
 
     /**
      * Records and saves an audio buffer. Requests recording to terminate if
-     * there are no more audio buffers available, otherwise requests recording
-     * to continue.
+     * there are no more audio buffers available or if recording failed.
+     * Otherwise requests recording to continue.
      * 
      * @see mixedbit.speechtrainer.controller.RecordPlayStrategy#handleRecord(mixedbit.speechtrainer.controller.Recorder)
      */
@@ -104,11 +104,13 @@ public class InteractiveTrainingController implements TrainingController, Record
         final AudioBuffer audioBuffer = audioBufferAllocator.allocateAudioBuffer();
         if (audioBuffer == null) {
             return RecordPlayTaskState.TERMINATE;
-        } else {
-            recorder.recordAudioBuffer(audioBuffer);
-            recordedBuffers.add(audioBuffer);
-            return RecordPlayTaskState.RECORD;
         }
+        if (!recorder.recordAudioBuffer(audioBuffer)) {
+            audioBufferAllocator.releaseAudioBuffer(audioBuffer);
+            return RecordPlayTaskState.TERMINATE;
+        }
+        recordedBuffers.add(audioBuffer);
+        return RecordPlayTaskState.RECORD;
     }
 
     /**

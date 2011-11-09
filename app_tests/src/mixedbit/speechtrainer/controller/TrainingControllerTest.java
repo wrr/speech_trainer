@@ -19,11 +19,6 @@
 package mixedbit.speechtrainer.controller;
 
 import junit.framework.TestCase;
-import mixedbit.speechtrainer.controller.AudioBufferAllocator;
-import mixedbit.speechtrainer.controller.Player;
-import mixedbit.speechtrainer.controller.RecordPlayTaskManager;
-import mixedbit.speechtrainer.controller.Recorder;
-import mixedbit.speechtrainer.controller.TrainingController;
 import mixedbit.speechtrainer.controller.AudioBufferAllocator.AudioBuffer;
 
 import org.easymock.EasyMock;
@@ -41,8 +36,9 @@ public abstract class TrainingControllerTest extends TestCase {
      * for calling these). Keeps track of the total number of recorded buffers.
      */
     protected class TestRecorder implements Recorder {
-        short recordedBuffersCount = 0;
-        double lastRecordedAudioBufferSoundLevel = -1.0;
+        private short recordedBuffersCount = 0;
+        private double lastRecordedAudioBufferSoundLevel = -1.0;
+        private boolean recordAudioBufferResult = true;
 
         @Override
         public void startRecording() {
@@ -50,18 +46,23 @@ public abstract class TrainingControllerTest extends TestCase {
         }
 
         @Override
-        public void recordAudioBuffer(AudioBuffer audioBuffer) {
+        public boolean recordAudioBuffer(AudioBuffer audioBuffer) {
             assertTrue(audioBuffer.getAudioData().length == AUDIO_BUFFER_SIZE);
             audioBuffer.getAudioData()[0] = recordedBuffersCount;
             audioBuffer.audioDataStored(1);
             lastRecordedAudioBufferSoundLevel = audioBuffer.getSoundLevel();
             assertTrue(Short.MAX_VALUE != recordedBuffersCount);
             recordedBuffersCount += 1;
+            return recordAudioBufferResult;
         }
 
         @Override
         public void stopRecording() {
             fail("stopRecording should not be called by TrainingController.");
+        }
+
+        public void setRecordAudioBufferResult(boolean recordAudioBufferResult) {
+            this.recordAudioBufferResult = recordAudioBufferResult;
         }
 
         public short getRecordedBuffersCount() {

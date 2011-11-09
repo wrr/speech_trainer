@@ -71,9 +71,10 @@ public class AutomaticTrainingController implements TrainingController, RecordPl
 
     /**
      * Records an audio buffer. Switches to playing if there are no more audio
-     * buffers available. Passes parameters of the newly recorded buffer to the
-     * silence filter. Depending on an action returned by the filter saves or
-     * rejects the buffer and continues recording or switches to playing.
+     * buffers available. Terminates if recording of an audio buffer failed.
+     * Passes parameters of the newly recorded buffer to the silence filter.
+     * Depending on an action returned by the filter saves or rejects the buffer
+     * and continues recording or switches to playing.
      * 
      * @see mixedbit.speechtrainer.controller.RecordPlayStrategy#handleRecord(mixedbit.speechtrainer.controller.Recorder)
      */
@@ -84,7 +85,10 @@ public class AutomaticTrainingController implements TrainingController, RecordPl
             // No more audio buffers, play all recorded data to free memory.
             return RecordPlayTaskState.PLAY;
         }
-        recorder.recordAudioBuffer(audioBuffer);
+        if (!recorder.recordAudioBuffer(audioBuffer)) {
+            audioBufferAllocator.releaseAudioBuffer(audioBuffer);
+            return RecordPlayTaskState.TERMINATE;
+        }
         recordedBuffers.addLast(audioBuffer);
         final FilterResult filterResult = silenceFilter.filterRecorderBuffer(audioBuffer
                 .getSoundLevel(), audioBuffer.getAudioDataLengthInShorts());

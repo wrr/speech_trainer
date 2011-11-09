@@ -20,7 +20,6 @@ package mixedbit.speechtrainer.view;
 
 import java.util.Iterator;
 
-import mixedbit.speechtrainer.controller.AudioEventListener;
 import mixedbit.speechtrainer.model.AudioBufferInfo;
 import mixedbit.speechtrainer.model.AudioEventHistory;
 import android.content.Context;
@@ -28,27 +27,18 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 
 /**
- * Updates the UI in response to audio events. The UI holds following elements:
+ * Draws a plot with sound levels of recently recorded or played buffers. The
+ * data to be plotted is obtained from the AudioEventHistory.
  * 
- * -A plot with sound levels of recently recorded or played buffers. The data to
- * be plotted is obtained from the AudioEventHistory. The plot is is updated
- * each time new buffer is recorded or played.
- * 
- * -Record status view that is enabled when recording starts and disabled when
- * recording ends.
- * 
- * The creator of the AudioEventView must set AudioEventHistory and
- * RecordStatusView before recording or playing is started.
+ * The creator of the AudioEventView must set AudioEventHistory.
  */
-public class AudioEventView extends ImageButton implements AudioEventListener {
+public class AudioEventView extends ImageButton {
     private static final int RECORDED_BUFFER_COLOR = 0xffd00000;
     private static final int PLAYED_BUFFER_COLOR = 0xff990000;
     private final Paint recordedBufferPaint;
     private final Paint playedBufferPaint;
-    private ImageView recordStatusView;
     private AudioEventHistory audioEventHistory;
 
     public AudioEventView(Context context, AttributeSet attrs) {
@@ -60,69 +50,15 @@ public class AudioEventView extends ImageButton implements AudioEventListener {
     }
 
     /**
-     * Must be called with not null argument before recording or playing is
-     * started for the first time.
-     * 
-     * @param recordStatusView
-     *            A view to be enabled when recording starts and disabled when
-     *            recording ends.
-     */
-    public void setRecordStatusView(ImageView recordStatusView) {
-        this.recordStatusView = recordStatusView;
-        recordStatusView.setEnabled(false);
-    }
-
-    /**
-     * Must be called with not null argument before recording or playing is
-     * started for the first time.
+     * Must be called before recording or playing is started for the first time.
      * 
      * @param audioEventHistory
-     *            Provides a data to be plotted.
+     *            Provides a data to be plotted. Not null.
      */
     public void setAudioEventHistory(AudioEventHistory audioEventHistory) {
         this.audioEventHistory = audioEventHistory;
     }
 
-
-    @Override
-    public void audioBufferPlayed(int audioBufferId, double soundLevel) {
-        // Redraw the plot.
-        postInvalidate();
-    }
-
-    @Override
-    public void audioBufferRecorded(int audioBufferId, double soundLevel) {
-        // Redraw the plot.
-        postInvalidate();
-    }
-
-    @Override
-    public void recordingStarted() {
-        recordStatusView.getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                recordStatusView.setEnabled(true);
-            }
-        });
-    }
-
-    @Override
-    public void recordingStopped() {
-        recordStatusView.getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                recordStatusView.setEnabled(false);
-            }
-        });
-    }
-
-    @Override
-    public void playingStarted() {
-    }
-
-    @Override
-    public void playingStopped() {
-    }
 
     @Override
     protected void onDraw(Canvas canvas) {

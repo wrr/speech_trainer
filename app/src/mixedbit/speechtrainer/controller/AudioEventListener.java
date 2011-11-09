@@ -41,6 +41,14 @@ public interface AudioEventListener {
     public void audioBufferRecorded(int audioBufferId, double soundLevel);
 
     /**
+     * Informs the listener that recording of an audio buffer failed. This
+     * usually happens when some other application starts using the microphone.
+     * Listener should not assume that recording has stopped when this callback
+     * is invoked, recordingStopped() will still be called.
+     */
+    public void audioBufferRecordingFailed();
+
+    /**
      * Informs the listener that recording has stopped. Listener can assume no
      * more calls to audioBufferRecorded will be made until recordingStarted is
      * called again.

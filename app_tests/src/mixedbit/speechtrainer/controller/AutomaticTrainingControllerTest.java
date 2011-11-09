@@ -18,9 +18,6 @@
 
 package mixedbit.speechtrainer.controller;
 
-import mixedbit.speechtrainer.controller.AutomaticTrainingController;
-import mixedbit.speechtrainer.controller.SilenceFilter;
-import mixedbit.speechtrainer.controller.TrainingController;
 import mixedbit.speechtrainer.controller.RecordPlayTaskManager.RecordPlayTaskState;
 import mixedbit.speechtrainer.controller.SilenceFilter.Action;
 
@@ -142,7 +139,7 @@ public class AutomaticTrainingControllerTest extends TrainingControllerTest {
 
     public void testRecordingTerminatesWhenNoMoreAudioBuffers() {
         expectTrainingStarted();
-        // Configure the silence filter to accept each buffer and never request
+        // Configure the silence filter to accept any buffer and never request
         // playing to be started.
         EasyMock.expect(
                 mockSilenceFilter.filterRecorderBuffer(EasyMock.anyDouble(), EasyMock.anyInt()))
@@ -162,6 +159,22 @@ public class AutomaticTrainingControllerTest extends TrainingControllerTest {
         // start playing (return PLAY status).
         assertEquals(RecordPlayTaskState.PLAY, trainingController.handleRecord(testRecorder));
         assertEquals(NUMBER_OF_AUDIO_BUFFERS, testRecorder.getRecordedBuffersCount());
+        verifyAll();
+    }
+
+    public void testRecordingTerminatesWhenRecordAudioBufferFails() {
+        expectTrainingStarted();
+        // Configure the silence filter to accept any buffer.
+        EasyMock.expect(
+                mockSilenceFilter.filterRecorderBuffer(EasyMock.anyDouble(), EasyMock.anyInt()))
+                .andReturn(mockSilenceFilter.new FilterResult(Action.ACCEPT_BUFFER)).anyTimes();
+        replayAll();
+        trainingController.startTraining();
+        assertEquals(RecordPlayTaskState.RECORD, trainingController.handleRecord(testRecorder));
+        // The next recordAudioBuffer call should fail and handleRecord should
+        // request RecordPlayTask to terminate.
+        testRecorder.setRecordAudioBufferResult(false);
+        assertEquals(RecordPlayTaskState.TERMINATE, trainingController.handleRecord(testRecorder));
         verifyAll();
     }
 }

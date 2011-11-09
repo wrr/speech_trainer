@@ -67,6 +67,7 @@ public class AudioEventCollectorTest extends TestCase {
         final int soundLevel = 112;
         mockAudioEventListener.recordingStarted();
         mockAudioEventListener.audioBufferRecorded(bufferId, soundLevel);
+        mockAudioEventListener.audioBufferRecordingFailed();
         mockAudioEventListener.recordingStopped();
         mockAudioEventListener.playingStarted();
         mockAudioEventListener.audioBufferPlayed(bufferId, soundLevel);
@@ -75,6 +76,7 @@ public class AudioEventCollectorTest extends TestCase {
 
         audioEventCollector.recordingStarted();
         audioEventCollector.audioBufferRecorded(bufferId, soundLevel);
+        audioEventCollector.audioBufferRecordingFailed();
         audioEventCollector.recordingStopped();
         audioEventCollector.playingStarted();
         audioEventCollector.audioBufferPlayed(bufferId, soundLevel);
