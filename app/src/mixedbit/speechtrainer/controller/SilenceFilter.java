@@ -18,7 +18,6 @@
 
 package mixedbit.speechtrainer.controller;
 
-import java.util.Deque;
 import java.util.LinkedList;
 
 import mixedbit.speechtrainer.Assertions;
@@ -127,7 +126,7 @@ class SilenceFilter {
     // The length of each individual recent buffer with silence. Reset together
     // with recentSilenceCombinedLengthMicros. Sum of all individual lengths
     // is equal to recentSilenceCombinedLengthMicros.
-    private final Deque<Long> recentSilenceBuffersLengthMicros = new LinkedList<Long>();
+    private final LinkedList<Long> recentSilenceBuffersLengthMicros = new LinkedList<Long>();
 
     public SilenceFilter(SilenceLevelDetector silenceLevelDetector) {
         this.silenceLevelDetector = silenceLevelDetector;

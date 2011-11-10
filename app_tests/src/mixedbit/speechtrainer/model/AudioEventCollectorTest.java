@@ -91,7 +91,7 @@ public class AudioEventCollectorTest extends TestCase {
             audioEventCollector.audioBufferRecorded(i, 100 + i);
         }
         ;
-        final Iterator<? extends AudioBufferInfo> it =
+        final Iterator<AudioBufferInfo> it =
             audioEventCollector.getIteratorOverAudioEventsToPlot(10);
         int iteratedEventsCount = 0;
         while (it.hasNext()) {
@@ -127,7 +127,7 @@ public class AudioEventCollectorTest extends TestCase {
         for (int i = 0; i < eventsCount; i++) {
             audioEventCollector.audioBufferRecorded(i, 100 + i);
         }
-        final Iterator<? extends AudioBufferInfo> it =
+        final Iterator<AudioBufferInfo> it =
             audioEventCollector.getIteratorOverAudioEventsToPlot(10);
 
         int iteratedEventsCount = 0;
@@ -150,7 +150,7 @@ public class AudioEventCollectorTest extends TestCase {
         for (int i = 0; i < eventsCount; i++) {
             audioEventCollector.audioBufferRecorded(i, soundLevel);
         }
-        Iterator<? extends AudioBufferInfo> it = audioEventCollector
+        Iterator<AudioBufferInfo> it = audioEventCollector
         .getIteratorOverAudioEventsToPlot(10);
 
         // New events cause HISTORY_SIZE to be exceeded, but the iterator over
@@ -193,7 +193,7 @@ public class AudioEventCollectorTest extends TestCase {
         audioEventCollector.audioBufferPlayed(2, soundLevel);
         audioEventCollector.playingStopped();
 
-        Iterator<? extends AudioBufferInfo> it = audioEventCollector
+        Iterator<AudioBufferInfo> it = audioEventCollector
         .getIteratorOverAudioEventsToPlot(10);
         AudioBufferInfo audioBufferInfo = it.next();
         assertEquals(3, audioBufferInfo.getAudioBufferId());
@@ -235,7 +235,7 @@ public class AudioEventCollectorTest extends TestCase {
         audioEventCollector.playingStarted();
         audioEventCollector.audioBufferPlayed(1, soundLevel);
 
-        Iterator<? extends AudioBufferInfo> it =
+        Iterator<AudioBufferInfo> it =
             audioEventCollector.getIteratorOverAudioEventsToPlot(plotWidth);
         AudioBufferInfo audioBufferInfo = it.next();
         // Last played buffer with id 1 should be at the center of the plot.

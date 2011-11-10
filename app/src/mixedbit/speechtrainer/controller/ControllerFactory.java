@@ -105,13 +105,14 @@ public class ControllerFactory {
         // Unlike AudioTrack buffer, AudioRecord buffer could be larger than
         // minimum without causing any problems. But minimum works well.
         final int audioRecordBufferSize = AudioRecord.getMinBufferSize(
-                SpeechTrainerConfig.SAMPLE_RATE_HZ, AudioFormat.CHANNEL_IN_MONO,
+                SpeechTrainerConfig.SAMPLE_RATE_HZ, AudioFormat.CHANNEL_CONFIGURATION_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
 
         // CHANNEL_IN_MONO is guaranteed to work on all devices.
         // ENCODING_PCM_16BIT is guaranteed to work on all devices.
         audioRecord = new AudioRecord(AudioSource.MIC, SpeechTrainerConfig.SAMPLE_RATE_HZ,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, audioRecordBufferSize);
+                AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT,
+                audioRecordBufferSize);
         if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
             audioRecord = null;
             throw new InitializationException("Failed to initialize recording.");
@@ -130,11 +131,13 @@ public class ControllerFactory {
         // part of this data if the output buffer was large.
         final int audioTrackBufferSize = AudioTrack.getMinBufferSize(
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                AudioFormat.CHANNEL_CONFIGURATION_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
 
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, audioTrackBufferSize,
+                AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT,
+                audioTrackBufferSize,
                 AudioTrack.MODE_STREAM);
         if (audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
             audioTrack = null;

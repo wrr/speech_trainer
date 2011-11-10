@@ -65,7 +65,7 @@ public class AudioEventView extends ImageButton {
         final int viewWidth = getWidth();
         final int viewHeight = getHeight();
 
-        final Iterator<? extends AudioBufferInfo> buffersIterator =
+        final Iterator<AudioBufferInfo> buffersIterator =
             audioEventHistory.getIteratorOverAudioEventsToPlot(viewWidth);
 
         for (int i = 0; i < viewWidth && buffersIterator.hasNext(); ++i) {

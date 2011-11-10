@@ -18,10 +18,12 @@
 
 package mixedbit.speechtrainer.model;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.NavigableSet;
 import java.util.Queue;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import mixedbit.speechtrainer.Assertions;
@@ -36,7 +38,7 @@ import mixedbit.speechtrainer.controller.AudioEventListener;
  */
 public class AudioEventCollector implements AudioEventListener, AudioEventHistory {
 
-    private class AudioBufferInfoImpl implements AudioBufferInfo, Comparable<AudioBufferInfoImpl> {
+    private class AudioBufferInfoImpl implements AudioBufferInfo {
         private final int audioBufferId;
         private final double soundLevel;
 
@@ -58,25 +60,10 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
         @Override
         public boolean isPlayed() {
             synchronized (AudioEventCollector.this) {
-                return firstBufferPlayed != null && firstBufferPlayed.compareTo(this) <= 0
-                && lastBufferPlayed.compareTo(this) >= 0;
+                return firstBufferPlayed != null
+                && firstBufferPlayed.getAudioBufferId() <= audioBufferId
+                && audioBufferId <= lastBufferPlayed.getAudioBufferId();
             }
-        }
-
-        /**
-         * The largest buffer is the one recorded last.
-         *
-         * @see java.lang.Comparable#compareTo(java.lang.Object)
-         */
-        @Override
-        public int compareTo(AudioBufferInfoImpl another) {
-            if (another == null || this.audioBufferId < another.audioBufferId) {
-                return -1;
-            }
-            if (this.audioBufferId > another.audioBufferId) {
-                return 1;
-            }
-            return 0;
         }
     }
 
@@ -85,10 +72,17 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
     // A chained listener to which all audio events are also passed (In
     // production code this is the GUI component that displays audio events).
     private final AudioEventListener nextListener;
-    private final NavigableSet<AudioBufferInfoImpl> recordedBuffers = new TreeSet<AudioBufferInfoImpl>();
+
+    // The two sorted sets are kept in sync. They could be replaced with a
+    // single NavigableSet that supports iteration in a reverse order.
+    // Unfortunately the NavigableSet is available only from Android API
+    // level 9.
+    private final SortedSet<AudioBufferInfo> recordedBuffersLastRecordedLast;
+    private final SortedSet<AudioBufferInfo> recordedBuffersLastRecordedFirst;
+
     // Recently recorded buffers are not added directly to recordedBuffers in
     // order not to invalidate iterator that can be in use by the GUI.
-    private final Queue<AudioBufferInfoImpl> recentlyRecordedBuffers = new LinkedList<AudioBufferInfoImpl>();
+    private final Queue<AudioBufferInfo> recentlyRecordedBuffers = new LinkedList<AudioBufferInfo>();
     private double maxSoundLevel;
     private double minSoundLevel;
     private AudioBufferInfoImpl firstBufferPlayed = null;
@@ -100,6 +94,23 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
      */
     public AudioEventCollector(AudioEventListener nextListener) {
         this.nextListener = nextListener;
+        final Comparator<AudioBufferInfo> lastRecordedBufferLastComparator =
+            new Comparator<AudioBufferInfo>() {
+            @Override
+            public int compare(AudioBufferInfo a, AudioBufferInfo b) {
+                if (a.getAudioBufferId() < b.getAudioBufferId()) {
+                    return -1;
+                }
+                if (a.getAudioBufferId() > b.getAudioBufferId()) {
+                    return 1;
+                }
+                return 0;
+            }
+        };
+        recordedBuffersLastRecordedLast = new TreeSet<AudioBufferInfo>(
+                lastRecordedBufferLastComparator);
+        recordedBuffersLastRecordedFirst = new TreeSet<AudioBufferInfo>(
+                Collections.reverseOrder(lastRecordedBufferLastComparator));
         resetHistory();
     }
 
@@ -108,7 +119,8 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
         maxSoundLevel = 0.0;
         minSoundLevel = Double.MAX_VALUE;
         recentlyRecordedBuffers.clear();
-        recordedBuffers.clear();
+        recordedBuffersLastRecordedLast.clear();
+        recordedBuffersLastRecordedFirst.clear();
     }
 
     @Override
@@ -178,7 +190,7 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
     }
 
     @Override
-    public synchronized Iterator<? extends AudioBufferInfo> getIteratorOverAudioEventsToPlot(
+    public synchronized Iterator<AudioBufferInfo> getIteratorOverAudioEventsToPlot(
             int plotWidth) {
         moveRecentlyRecordedBuffersToRecordedBuffers();
         // This invalidates iterator returned by the previous call to
@@ -189,7 +201,8 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
         if (isPlaying() && !isOnPlotOfRecentlyRecordedBuffers(firstBufferPlayed, plotWidth)) {
             return centerPlotOn(lastBufferPlayed, plotWidth);
         } else {
-            return recordedBuffers.descendingIterator();
+            // An iterator pointing at the most recently recorded buffer.
+            return recordedBuffersLastRecordedFirst.iterator();
         }
     }
 
@@ -198,15 +211,15 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
     }
 
     private boolean isOnPlotOfRecentlyRecordedBuffers(AudioBufferInfoImpl audioBuffer, int plotWidth) {
-        return (recordedBuffers.tailSet(audioBuffer).size() <= plotWidth);
+        return (recordedBuffersLastRecordedLast.tailSet(audioBuffer).size() <= plotWidth);
     }
 
-    private Iterator<AudioBufferInfoImpl> centerPlotOn(AudioBufferInfoImpl audioBufferToCenter,
+    private Iterator<AudioBufferInfo> centerPlotOn(AudioBufferInfoImpl audioBufferToCenter,
             int plotWidth) {
         // Point the iterator at the buffer to be placed in the center.
-        final Iterator<AudioBufferInfoImpl> iterator =
-            recordedBuffers.tailSet(audioBufferToCenter).iterator();
-        AudioBufferInfoImpl startBuffer = recordedBuffers.last();
+        final Iterator<AudioBufferInfo> iterator =
+            recordedBuffersLastRecordedLast.tailSet(audioBufferToCenter).iterator();
+        AudioBufferInfo startBuffer = recordedBuffersLastRecordedLast.last();
         // Move the iterator by half of the plot width, so the centered buffer
         // is actually in the center.
         for (int i = 0; i <= plotWidth / 2; ++i) {
@@ -217,18 +230,22 @@ public class AudioEventCollector implements AudioEventListener, AudioEventHistor
         }
         // This is equivalent to reversing the direction of the iterator that
         // was adjusted in previous steps.
-        return recordedBuffers.descendingSet().tailSet(startBuffer).iterator();
+        return recordedBuffersLastRecordedFirst.tailSet(startBuffer).iterator();
     }
 
     private void removeOldRecordedBuffers() {
-        while (recordedBuffers.size() > HISTORY_SIZE) {
-            recordedBuffers.remove(recordedBuffers.first());
+        while (recordedBuffersLastRecordedLast.size() > HISTORY_SIZE) {
+            final AudioBufferInfo bufferToRemove = recordedBuffersLastRecordedLast.first();
+            recordedBuffersLastRecordedLast.remove(bufferToRemove);
+            recordedBuffersLastRecordedFirst.remove(bufferToRemove);
         }
     }
 
     private void moveRecentlyRecordedBuffersToRecordedBuffers() {
         while (!recentlyRecordedBuffers.isEmpty()) {
-            recordedBuffers.add(recentlyRecordedBuffers.remove());
+            final AudioBufferInfo bufferToAdd = recentlyRecordedBuffers.remove();
+            recordedBuffersLastRecordedLast.add(bufferToAdd);
+            recordedBuffersLastRecordedFirst.add(bufferToAdd);
         }
     }
 }

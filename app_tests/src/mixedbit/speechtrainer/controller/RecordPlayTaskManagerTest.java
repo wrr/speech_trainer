@@ -67,7 +67,7 @@ public class RecordPlayTaskManagerTest extends TestCase {
     private void waitForTaskToFinish() {
         executorService.shutdown();
         try {
-            assertTrue(executorService.awaitTermination(1, TimeUnit.MINUTES));
+            assertTrue(executorService.awaitTermination(60, TimeUnit.SECONDS));
         } catch (final InterruptedException e) {
             fail("Task execution interrupted.");
         }

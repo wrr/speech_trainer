@@ -50,7 +50,7 @@ public interface AudioEventHistory {
      *         recently recorded buffer. The iterator remains valid until the
      *         next call to the getIteratorOverAudioEventsToPlot.
      */
-    public Iterator<? extends AudioBufferInfo> getIteratorOverAudioEventsToPlot(int plotWidth);
+    public Iterator<AudioBufferInfo> getIteratorOverAudioEventsToPlot(int plotWidth);
 
     /**
      * Clears the history of recorded and played buffers. Resets min and max

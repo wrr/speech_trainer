@@ -18,7 +18,6 @@
 
 package mixedbit.speechtrainer.controller;
 
-import java.util.Deque;
 import java.util.LinkedList;
 
 import mixedbit.speechtrainer.controller.AudioBufferAllocator.AudioBuffer;
@@ -34,7 +33,7 @@ import mixedbit.speechtrainer.controller.SilenceFilter.FilterResult;
  */
 public class AutomaticTrainingController implements TrainingController, RecordPlayStrategy {
     private final AudioBufferAllocator audioBufferAllocator;
-    private final Deque<AudioBuffer> recordedBuffers = new LinkedList<AudioBuffer>();
+    private final LinkedList<AudioBuffer> recordedBuffers = new LinkedList<AudioBuffer>();
     private final SilenceFilter silenceFilter;
     private final RecordPlayTaskManager recordPlayTaskManager;
 
@@ -116,8 +115,8 @@ public class AutomaticTrainingController implements TrainingController, RecordPl
      */
     @Override
     public RecordPlayTaskState handlePlay(Player player) {
-        final AudioBuffer bufferToPlay = recordedBuffers.pollFirst();
-        if (bufferToPlay != null) {
+        if (!recordedBuffers.isEmpty()) {
+            final AudioBuffer bufferToPlay = recordedBuffers.removeFirst();
             player.writeAudioBuffer(bufferToPlay);
             audioBufferAllocator.releaseAudioBuffer(bufferToPlay);
             return RecordPlayTaskState.PLAY;
