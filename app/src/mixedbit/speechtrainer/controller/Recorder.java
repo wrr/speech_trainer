@@ -24,9 +24,9 @@ import android.media.AudioRecord;
 /**
  * Wrapper over AudioRecord that exposes minimal interface for recording
  * AudioBuffers. Informs AudioEventListener about each executed action
- * (recording started, audio buffer recorded, recording stopped). As in case of
- * the Player interface, this interface is extracted from the RecorderImpl to
- * allow mocking with the EasyMock.
+ * (recording started, audio buffer recorded, recording of audio buffer failed,
+ * recording stopped). As in case of the Player interface, this interface is
+ * extracted from the RecorderImpl to allow mocking with the EasyMock.
  */
 interface Recorder {
 

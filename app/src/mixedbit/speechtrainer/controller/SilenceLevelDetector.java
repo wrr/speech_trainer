@@ -23,8 +23,8 @@ import mixedbit.speechtrainer.SpeechTrainerConfig;
 /**
  * Calculates silence level based on the most recent measurements of sound
  * level. The combined length of measures taken into account is at most
- * SOUND_LEVEL_HISTORY_LENGTH_S seconds, older measures are discarded. This is
- * to allow for the silence level to increase when background noise increases.
+ * SOUND_LEVEL_HISTORY_LENGTH_S seconds, older measures are discarded. This
+ * allows for the silence level to increase when background noise increases.
  * Silence level is SILENCE_LEVEL_MARGIN above the smallest measure.
  */
 class SilenceLevelDetector {

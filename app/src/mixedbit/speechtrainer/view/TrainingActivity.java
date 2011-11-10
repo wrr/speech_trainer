@@ -77,8 +77,6 @@ AudioEventListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // TODO: Attribute minSdkVersion (3) is lower than the project target
-        // API level (10)
         super.onCreate(savedInstanceState);
         setContentView(R.layout.training);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

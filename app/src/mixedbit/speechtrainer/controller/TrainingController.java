@@ -26,7 +26,7 @@ package mixedbit.speechtrainer.controller;
 public interface TrainingController {
     /**
      * Starts training. After the training is started, recorder and player can
-     * be started and audio buffers can be allocated and used.
+     * be started.
      */
     public void startTraining();
 

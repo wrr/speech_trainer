@@ -31,7 +31,7 @@ import android.media.MediaRecorder.AudioSource;
 
 /**
  * Creates training controllers. It is OK to create multiple controllers with
- * this class, but a user must ensure that multiple controllers are never
+ * this class, but the user must ensure that multiple controllers are never
  * started simultaneously.
  */
 public class ControllerFactory {
