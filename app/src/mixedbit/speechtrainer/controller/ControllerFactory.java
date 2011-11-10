@@ -102,6 +102,10 @@ public class ControllerFactory {
         // The AudioRecord configurations parameters used here, are guaranteed
         // to be supported on all devices.
 
+        // AudioFormat.CHANNEL_IN_MONO should be used in place of deprecated
+        // AudioFormat.CHANNEL_CONFIGURATION_MONO, but it is not available for
+        // API level 3.
+
         // Unlike AudioTrack buffer, AudioRecord buffer could be larger than
         // minimum without causing any problems. But minimum works well.
         final int audioRecordBufferSize = AudioRecord.getMinBufferSize(
@@ -122,6 +126,10 @@ public class ControllerFactory {
     private void createAudioTrack() throws InitializationException {
         // The AudioTrack configurations parameters used here, are guaranteed to
         // be supported on all devices.
+
+        // AudioFormat.CHANNEL_OUT_MONO should be used in place of deprecated
+        // AudioFormat.CHANNEL_CONFIGURATION_MONO, but it is not available for
+        // API level 3.
 
         // Output buffer for playing should be as small as possible, so
         // AudioBufferPlayed events are not invoked long before audio buffer is
