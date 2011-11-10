@@ -111,6 +111,9 @@ public class ControllerFactory {
         final int audioRecordBufferSize = AudioRecord.getMinBufferSize(
                 SpeechTrainerConfig.SAMPLE_RATE_HZ, AudioFormat.CHANNEL_CONFIGURATION_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
+        if (audioRecordBufferSize <= 0) {
+            throw new InitializationException("Failed to initialize recording.");
+        }
 
         // CHANNEL_IN_MONO is guaranteed to work on all devices.
         // ENCODING_PCM_16BIT is guaranteed to work on all devices.
@@ -141,6 +144,10 @@ public class ControllerFactory {
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_CONFIGURATION_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
+
+        if (audioTrackBufferSize <= 0) {
+            throw new InitializationException("Failed to initialize playback.");
+        }
 
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
