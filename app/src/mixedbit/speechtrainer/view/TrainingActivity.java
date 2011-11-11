@@ -32,6 +32,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.Menu;
@@ -77,10 +78,12 @@ AudioEventListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // TODO: can volume control be changed to control media volume?
         super.onCreate(savedInstanceState);
         setContentView(R.layout.training);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Volume controls should change music volume, not ringer volume as it
+        // is by default.
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         recordStatusView = (ImageView) findViewById(R.id.recordStatusView);
         recordStatusView.setEnabled(false);
