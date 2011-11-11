@@ -28,6 +28,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder.AudioSource;
+import android.util.Log;
 
 /**
  * Creates training controllers. It is OK to create multiple controllers with
@@ -49,6 +50,7 @@ public class ControllerFactory {
     private final ExecutorService executor;
     private AudioRecord audioRecord;
     private AudioTrack audioTrack;
+    private int audioTrackBufferSizeInBytes;
 
     public ControllerFactory() {
         audioBufferAllocator = new AudioBufferAllocator(
@@ -71,7 +73,8 @@ public class ControllerFactory {
             createAudioTrack();
         }
         final Recorder recorder = new RecorderImpl(audioRecord, audioEventListener);
-        final Player player = new PlayerImpl(audioTrack, audioEventListener);
+        final Player player = new PlayerImpl(audioTrack, audioTrackBufferSizeInBytes,
+                audioEventListener);
         final RecordPlayTaskManager recordPlayTaskManager = new RecordPlayTaskManager(recorder,
                 player, executor, RecordPlayTaskPriority.HIGH);
         return new InteractiveTrainingController(recordPlayTaskManager, audioBufferAllocator);
@@ -90,7 +93,8 @@ public class ControllerFactory {
         if (audioTrack == null) {
             createAudioTrack();
         }
-        final Player player = new PlayerImpl(audioTrack, audioEventListener);
+        final Player player = new PlayerImpl(audioTrack, audioTrackBufferSizeInBytes,
+                audioEventListener);
         final Recorder recorder = new RecorderImpl(audioRecord, audioEventListener);
         final RecordPlayTaskManager recordPlayTaskManager = new RecordPlayTaskManager(recorder,
                 player, executor, RecordPlayTaskPriority.HIGH);
@@ -108,10 +112,10 @@ public class ControllerFactory {
 
         // Unlike AudioTrack buffer, AudioRecord buffer could be larger than
         // minimum without causing any problems. But minimum works well.
-        final int audioRecordBufferSize = AudioRecord.getMinBufferSize(
+        final int audioRecordBufferSizeInBytes = AudioRecord.getMinBufferSize(
                 SpeechTrainerConfig.SAMPLE_RATE_HZ, AudioFormat.CHANNEL_CONFIGURATION_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        if (audioRecordBufferSize <= 0) {
+        if (audioRecordBufferSizeInBytes <= 0) {
             throw new InitializationException("Failed to initialize recording.");
         }
 
@@ -119,7 +123,7 @@ public class ControllerFactory {
         // ENCODING_PCM_16BIT is guaranteed to work on all devices.
         audioRecord = new AudioRecord(AudioSource.MIC, SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                audioRecordBufferSize);
+                audioRecordBufferSizeInBytes);
         if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
             audioRecord = null;
             throw new InitializationException("Failed to initialize recording.");
@@ -134,25 +138,24 @@ public class ControllerFactory {
         // AudioFormat.CHANNEL_CONFIGURATION_MONO, but it is not available for
         // API level 3.
 
-        // Output buffer for playing should be as small as possible, so
+        // Output buffer for playing should be as short as possible, so
         // AudioBufferPlayed events are not invoked long before audio buffer is
-        // actually played. Also, after AudioTrack.stop() returns, data that is
-        // left in the output buffer is asynchronously played. This would cause
-        // AudioRecord that was started after AudioTrack was stopped to record
-        // part of this data if the output buffer was large.
-        final int audioTrackBufferSize = AudioTrack.getMinBufferSize(
+        // actually played. Also, when AudioTrack is stopped, it is filled with
+        // silence of length audioTrackBufferSizeInBytes. If the silence is too
+        // long, it causes a delay before the next recorded data starts playing.
+        audioTrackBufferSizeInBytes = AudioTrack.getMinBufferSize(
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_CONFIGURATION_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-
-        if (audioTrackBufferSize <= 0) {
+        Log.i(SpeechTrainerConfig.LOG_TAG, "Audio buffer size " + audioTrackBufferSizeInBytes);
+        if (audioTrackBufferSizeInBytes <= 0) {
             throw new InitializationException("Failed to initialize playback.");
         }
 
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                audioTrackBufferSize,
+                audioTrackBufferSizeInBytes,
                 AudioTrack.MODE_STREAM);
         if (audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
             audioTrack = null;

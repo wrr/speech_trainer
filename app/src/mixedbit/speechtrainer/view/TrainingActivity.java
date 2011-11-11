@@ -77,6 +77,7 @@ AudioEventListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // TODO: can volume control be changed to control media volume?
         super.onCreate(savedInstanceState);
         setContentView(R.layout.training);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

@@ -54,16 +54,23 @@ interface Player {
 class PlayerImpl implements Player {
     private final AudioTrack audioTrack;
     private final AudioEventListener audioEventListener;
+    // A buffer of silence, used to flush audio data when playing is stopped.
+    private final short[] silenceBuffer;
 
     /**
      * @param audioTrack
      *            AudioTrack object configured by a caller.
+     * @param outputBufferSizeInBytes
+     *            The size of the output buffer that was passed to the
+     *            AudioTrack constructor.
      * @param audioEventListener
      *            Listener that is informed about each action executed by the
      *            player.
      */
-    public PlayerImpl(AudioTrack audioTrack, AudioEventListener audioEventListener) {
+    public PlayerImpl(AudioTrack audioTrack, int outputBufferSizeInBytes,
+            AudioEventListener audioEventListener) {
         this.audioTrack = audioTrack;
+        silenceBuffer = new short[outputBufferSizeInBytes / 2];
         this.audioEventListener = audioEventListener;
     }
 
@@ -75,36 +82,47 @@ class PlayerImpl implements Player {
 
     @Override
     public void writeAudioBuffer(AudioBuffer audioBuffer) {
-        final int audioDataLength = audioBuffer.getAudioDataLengthInShorts();
+        if (writeRawBuffer(audioBuffer.getAudioData(), audioBuffer.getAudioDataLengthInShorts())) {
+            audioEventListener.audioBufferPlayed(
+                    audioBuffer.getAudioBufferId(), audioBuffer.getSoundLevel());
+        }
+    }
+
+    @Override
+    public void stopPlaying() {
+        // stopPlaying needs to wait for playing to stop, otherwise when
+        // recording is started, audio data can be still played and can be
+        // recorded again.
+        // Surprisingly, audioTrack.flush() and audioTrack.stop() do not
+        // synchronously wait for the playing to stop. Audio hardware finishes
+        // playing data that is left in the output buffer and it can do
+        // it after flush and stop returned. To be 100% sure that playing has
+        // stopped, the whole output buffer is filled with silence. If there
+        // is any audio data left in the buffer, filling with silence
+        // will blocks, until the data is played.
+        writeRawBuffer(silenceBuffer, silenceBuffer.length);
+        audioTrack.flush();
+        audioTrack.stop();
+        this.audioEventListener.playingStopped();
+    }
+
+    private boolean writeRawBuffer(short[] buffer, int bufferLength) {
         int totalWrittenAudioDataLength = 0;
         // On all tested devices, write() outputs the whole buffer in a single
         // call. But since the API documentation is not clear about this, the
         // loop handles the case of write() outputting only part of
         // the buffer.
-        while (totalWrittenAudioDataLength < audioDataLength) {
-            final int writtenAudioDataLength = audioTrack.write(audioBuffer.getAudioData(),
-                    totalWrittenAudioDataLength, audioDataLength - totalWrittenAudioDataLength);
+        while (totalWrittenAudioDataLength < bufferLength) {
+            final int writtenAudioDataLength = audioTrack.write(buffer,
+                    totalWrittenAudioDataLength, bufferLength - totalWrittenAudioDataLength);
             if (writtenAudioDataLength < 0) {
                 // Such error should not happen since audioTrack is guaranteed
                 // to be properly initialized.
-                return;
+                return false;
             }
             totalWrittenAudioDataLength += writtenAudioDataLength;
         }
-        audioEventListener.audioBufferPlayed(
-                audioBuffer.getAudioBufferId(), audioBuffer.getSoundLevel());
-    }
-
-    @Override
-    public void stopPlaying() {
-        // Surprisingly, none of the two calls bellow synchronously stops
-        // playing. AudioTrack asynchronously finishes playing data that is left
-        // in the output buffer and can do it after flush and stop returned.
-        // This is one of the reasons why the AudioTrack output buffer
-        // should be small.
-        audioTrack.flush();
-        audioTrack.stop();
-        this.audioEventListener.playingStopped();
+        return true;
     }
 
 }

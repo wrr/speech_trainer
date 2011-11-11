@@ -31,9 +31,9 @@ import android.util.Log;
 class SilenceLevelDetector {
     // Sound level measure is discarded if combined length of newer measures
     // exceeds this const.
-    public static final int SOUND_LEVEL_HISTORY_LENGTH_S = 20;
+    public static final int SOUND_LEVEL_HISTORY_LENGTH_S = 10;
     // Silence level is that much above the smallest measure.
-    public static final int SILENCE_LEVEL_MARGIN = 2;
+    public static final int SILENCE_LEVEL_MARGIN = 5;
     // Keeps the most recent measures of the sound level.
     private final BoundedPriorityQueue<Double> recentSoundLevels = new BoundedPriorityQueue<Double>(
             SOUND_LEVEL_HISTORY_LENGTH_S * SpeechTrainerConfig.numberOfBuffersPerSecond());
