@@ -75,7 +75,22 @@ class PlayerImpl implements Player {
 
     @Override
     public void writeAudioBuffer(AudioBuffer audioBuffer) {
-        audioTrack.write(audioBuffer.getAudioData(), 0, audioBuffer.getAudioDataLengthInShorts());
+        final int audioDataLength = audioBuffer.getAudioDataLengthInShorts();
+        int totalWrittenAudioDataLength = 0;
+        // On all tested devices, write() outputs the whole buffer in a single
+        // call. But since the API documentation is not clear about this, the
+        // loop handles the case of write() outputting only part of
+        // the buffer.
+        while (totalWrittenAudioDataLength < audioDataLength) {
+            final int writtenAudioDataLength = audioTrack.write(audioBuffer.getAudioData(),
+                    totalWrittenAudioDataLength, audioDataLength - totalWrittenAudioDataLength);
+            if (writtenAudioDataLength < 0) {
+                // Such error should not happen since audioTrack is guaranteed
+                // to be properly initialized.
+                return;
+            }
+            totalWrittenAudioDataLength += writtenAudioDataLength;
+        }
         audioEventListener.audioBufferPlayed(
                 audioBuffer.getAudioBufferId(), audioBuffer.getSoundLevel());
     }

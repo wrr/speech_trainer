@@ -18,8 +18,10 @@
 
 package mixedbit.speechtrainer.controller;
 
+import mixedbit.speechtrainer.SpeechTrainerConfig;
 import mixedbit.speechtrainer.controller.AudioBufferAllocator.AudioBuffer;
 import android.media.AudioRecord;
+import android.util.Log;
 
 /**
  * Wrapper over AudioRecord that exposes minimal interface for recording
@@ -77,17 +79,27 @@ class RecorderImpl implements Recorder {
     @Override
     public boolean readAudioBuffer(AudioBuffer audioBuffer) {
         final short[] audioData = audioBuffer.getAudioData();
-        final int dataRead = audioRecord.read(audioData, 0, audioData.length);
-        if (dataRead <= 0) {
-            audioBuffer.audioDataStored(0);
-            audioEventListener.audioBufferRecordingFailed();
-            return false;
-        } else {
-            audioBuffer.audioDataStored(dataRead);
-            audioEventListener.audioBufferRecorded(audioBuffer.getAudioBufferId(), audioBuffer
-                    .getSoundLevel());
-            return true;
+        int totalReadDataLength = 0;
+        // On all tested devices, read() fills the whole buffer in a single
+        // call. But since the API documentation is not clear about this, the
+        // loop handles the case of read() filling only part of a buffer.
+        while (totalReadDataLength < audioData.length) {
+            final int readDataLength = audioRecord.read(audioData, totalReadDataLength,
+                    audioData.length - totalReadDataLength);
+            Log.i(SpeechTrainerConfig.LOG_TAG, "recorded " + readDataLength + " shorts.");
+            if (readDataLength <= 0) {
+                // Even if buffer was partially read, discard recorded data and
+                // return an error.
+                audioBuffer.audioDataStored(0);
+                audioEventListener.audioBufferRecordingFailed();
+                return false;
+            }
+            totalReadDataLength += readDataLength;
         }
+        audioBuffer.audioDataStored(totalReadDataLength);
+        audioEventListener.audioBufferRecorded(audioBuffer.getAudioBufferId(), audioBuffer
+                .getSoundLevel());
+        return true;
     }
 
     @Override

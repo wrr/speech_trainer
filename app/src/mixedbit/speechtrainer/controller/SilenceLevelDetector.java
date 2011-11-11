@@ -19,6 +19,7 @@
 package mixedbit.speechtrainer.controller;
 
 import mixedbit.speechtrainer.SpeechTrainerConfig;
+import android.util.Log;
 
 /**
  * Calculates silence level based on the most recent measurements of sound
@@ -39,11 +40,9 @@ class SilenceLevelDetector {
 
     public void addSoundLevelMeasurement(double soundLevel) {
         recentSoundLevels.add(soundLevel);
-        // TODO: remove
-        /*
-         * Log.i(SpeechTrainerConfig.logTag, "Silence level " +
-         * getSilenceLevel() + " sound level " + soundLevel);
-         */
+        // TODO: remove all logs
+        Log.i(SpeechTrainerConfig.LOG_TAG, "Silence level " + getSilenceLevel() + " sound level "
+                + soundLevel);
     }
 
     public boolean isAboveSilenceLevel(double bufferSoundLevel) {
