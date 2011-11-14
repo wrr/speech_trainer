@@ -127,7 +127,7 @@ class AudioBufferAllocator {
                 this.soundLevel = DECIBEL_MULTIPLIER
                 * Math.log10(1.0 * sum / audioDataLengthInShorts);
             } else {
-                this.soundLevel = 0;
+                this.soundLevel = 0.0;
             }
         }
 

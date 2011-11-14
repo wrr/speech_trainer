@@ -18,38 +18,87 @@
 
 package mixedbit.speechtrainer.controller;
 
-import mixedbit.speechtrainer.controller.SilenceLevelDetector;
 import junit.framework.TestCase;
 
-/**
- * SilenceLevelDetector is a very simple wrapper over BoundedPriorityQueue, the
- * functionality is mostly covered by BoundedPriorityQueueTest.
- */
 public class SilenceLevelDetectorTest extends TestCase {
-
+    private static final double DELTA = 0.001;
     private final SilenceLevelDetector silenceLevelDetector = new SilenceLevelDetector();
 
-    public void testSilenceLevelIsSilenceLevelMarginAboveTheSmallestMeasure() {
-        silenceLevelDetector.addSoundLevelMeasurement(123);
-        silenceLevelDetector.addSoundLevelMeasurement(155);
-        silenceLevelDetector.addSoundLevelMeasurement(111);
 
-        assertFalse(silenceLevelDetector.isAboveSilenceLevel(111));
+    public void testFirstSampleIsTreatedAsSilence() {
+        // The first sample should be treated as silence. Because it is the only
+        // sample, it is equal to the mean value. The silence level should be
+        // set to the mean + SILENCE_LEAVE_MARGIN.
+        silenceLevelDetector.addSoundLevelMeasurement(123.0);
+
+        assertFalse(silenceLevelDetector.isAboveSilenceLevel(123.0));
         assertFalse(silenceLevelDetector.isAboveSilenceLevel(
-                111 + SilenceLevelDetector.SILENCE_LEVEL_MARGIN));
+                123.0 + SilenceLevelDetector.SILENCE_LEAVE_MARGIN));
         assertTrue(silenceLevelDetector.isAboveSilenceLevel(
-                111 + SilenceLevelDetector.SILENCE_LEVEL_MARGIN + 1.0));
+                123.0 + SilenceLevelDetector.SILENCE_LEAVE_MARGIN + DELTA));
+    }
+
+    public void testSilenceLevelIsSilenceLeaveMarginAboveTheMeanWhenRecordingSilence() {
+        // All samples are below the silence level.
+        silenceLevelDetector.addSoundLevelMeasurement(105.0);
+        silenceLevelDetector.addSoundLevelMeasurement(3.0);
+        silenceLevelDetector.addSoundLevelMeasurement(6.0);
+
+        // (105 + 3 + 6) / 3 = 37
+        assertFalse(silenceLevelDetector
+                .isAboveSilenceLevel(38.0 + SilenceLevelDetector.SILENCE_LEAVE_MARGIN));
+        assertTrue(silenceLevelDetector.isAboveSilenceLevel(38.0
+                + SilenceLevelDetector.SILENCE_LEAVE_MARGIN + DELTA));
+
+    }
+
+    public void testSilenceLevelIsSilenceEnterMarginAboveTheMeanWhenRecordingMeaningfulSound() {
+        silenceLevelDetector.addSoundLevelMeasurement(3.0);
+        silenceLevelDetector.addSoundLevelMeasurement(6.0);
+        // Add a sample above the silence level. It should not be included in
+        // the mean calculation and it should cause the silence level to be set
+        // SILENCE_ENTER_MARGIN above the mean.
+        silenceLevelDetector.addSoundLevelMeasurement(105.0);
+
+        // (3 + 6) / 2 = 4.5
+        assertFalse(silenceLevelDetector
+                .isAboveSilenceLevel(4.5 + SilenceLevelDetector.SILENCE_ENTER_MARGIN));
+        assertTrue(silenceLevelDetector.isAboveSilenceLevel(4.5
+                + SilenceLevelDetector.SILENCE_ENTER_MARGIN + DELTA));
+
+    }
+
+    public void testSwitchFromSilenceEnterMarginToSilenceLeaveMargin() {
+        silenceLevelDetector.addSoundLevelMeasurement(6.0);
+        // Add a sample above the silence level. It should not be included in
+        // the mean calculation and it should cause the silence level to be set
+        // SILENCE_ENTER_MARGIN above the mean.
+        silenceLevelDetector.addSoundLevelMeasurement(105.0);
+        // Add a sample below the silence level. It should be included in the
+        // mean calculation and it should cause the silence level to be set
+        // SILENCE_LEAVE_MARGIN below the mean.
+        silenceLevelDetector.addSoundLevelMeasurement(3.0);
+
+        // (3 + 6) / 2 = 4.5
+        assertFalse(silenceLevelDetector
+                .isAboveSilenceLevel(4.5 + SilenceLevelDetector.SILENCE_LEAVE_MARGIN));
+        assertTrue(silenceLevelDetector.isAboveSilenceLevel(4.5
+                + SilenceLevelDetector.SILENCE_LEAVE_MARGIN + DELTA));
+
     }
 
     public void testOldMeasuresAreDiscarded() {
-        silenceLevelDetector.addSoundLevelMeasurement(111);
-        assertTrue(silenceLevelDetector.isAboveSilenceLevel(200));
-
-        // Keep adding measures until the first measure is discarded. This
-        // wouldn't terminate if old measures were not removed.
-        while (silenceLevelDetector.isAboveSilenceLevel(200)) {
-            silenceLevelDetector.addSoundLevelMeasurement(200);
+        for (int i = 0; i < SilenceLevelDetector.SILENCE_HISTORY_LENGTH; i++) {
+            silenceLevelDetector.addSoundLevelMeasurement(100.0);
         }
+        // Adding SILENCE_HISTORY_LENGTH measures should discard all initial
+        // measures.
+        for (int i = 0; i < SilenceLevelDetector.SILENCE_HISTORY_LENGTH; i++) {
+            silenceLevelDetector.addSoundLevelMeasurement(3.0);
+        }
+        // Make sure initial measures are not taken into account.
+        assertTrue(silenceLevelDetector
+                .isAboveSilenceLevel(3.0 + SilenceLevelDetector.SILENCE_LEAVE_MARGIN + DELTA));
     }
 
 }

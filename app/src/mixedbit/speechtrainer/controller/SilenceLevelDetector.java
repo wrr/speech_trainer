@@ -18,38 +18,86 @@
 
 package mixedbit.speechtrainer.controller;
 
+import java.util.LinkedList;
+
 import mixedbit.speechtrainer.SpeechTrainerConfig;
-import android.util.Log;
 
 /**
- * Calculates silence level based on the most recent measurements of sound
- * level. The combined length of measures taken into account is at most
- * SOUND_LEVEL_HISTORY_LENGTH_S seconds, older measures are discarded. This
- * allows for the silence level to increase when background noise increases.
- * Silence level is SILENCE_LEVEL_MARGIN above the smallest measure.
+ * Estimates a silence level based on measurements of sound level. Determines if
+ * a given sound level is above the silence level.
+ * 
+ * The general idea is to find and update a mean sound level of samples that
+ * included silence. All samples for which sound level is less than the mean
+ * plus some threshold are determined to be silence.
+ * 
+ * A very similar approach along with comparison to alternatives is described in
+ * 'A Comparative Study of Speech Detection Methods' by Stefaan Van Gerven and
+ * Fei Xie.
+ * 
+ * A more detailed description follows:
+ * 
+ * The silence level is initialized to a large value, so the first sound level
+ * measurement is guaranteed to be below the silence level (it is not important
+ * if it really is silence).
+ * 
+ * A list of recent measurements of sound levels that were below the silence
+ * level is kept. The length of the list is limited, so the silence level is not
+ * skewed by the old measures.
+ * 
+ * -If a measurement of sound level is below the silence level, the measurement
+ * is added to the list. The silence level is updated to be a mean of all
+ * measures on the list plus SILENCE_LEAVE_MARGIN.
+ * 
+ * -If a measurement of sound level is above the silence level, the silence
+ * level is updated to be a mean of all measures on the list plus
+ * SILENCE_ENTER_MARGIN. The measure is not added to the list.
  */
 class SilenceLevelDetector {
-    // Sound level measure is discarded if combined length of newer measures
-    // exceeds this const.
-    public static final int SOUND_LEVEL_HISTORY_LENGTH_S = 10;
-    // Silence level is that much above the smallest measure.
-    public static final int SILENCE_LEVEL_MARGIN = 5;
-    // Keeps the most recent measures of the sound level.
-    private final BoundedPriorityQueue<Double> recentSoundLevels = new BoundedPriorityQueue<Double>(
-            SOUND_LEVEL_HISTORY_LENGTH_S * SpeechTrainerConfig.numberOfBuffersPerSecond());
+    // When silence is recorded, silence level is that much above the mean of
+    // recent sound levels of samples with silence.
+    public static final double SILENCE_LEAVE_MARGIN = 5.0;
+    // When meaningful sound is recorded, silence level is that much above the
+    // mean of recent sound levels of samples with silence.
+    public static final double SILENCE_ENTER_MARGIN = 2.0;
+    // Silence sound level is discarded if combined length of newer measures
+    // with silence exceeds this const.
+    public static final int SILENCE_HISTORY_LENGTH_S = 5;
+    // History length but in number of samples, not in seconds.
+    public static final int SILENCE_HISTORY_LENGTH = SILENCE_HISTORY_LENGTH_S
+    * SpeechTrainerConfig.numberOfBuffersPerSecond();
+    // Keeps the most recent measures of the sound level but only for samples
+    // that were below silence level.
+    private final LinkedList<Double> silenceHistory = new LinkedList<Double>();
+    // Sum of all values on the silenceHistory list.
+    private double silenceHistorySum = 0.0;
+    private double silenceLevel = Double.MAX_VALUE;
 
     public void addSoundLevelMeasurement(double soundLevel) {
-        recentSoundLevels.add(soundLevel);
-        // TODO: remove all logs
-        Log.i(SpeechTrainerConfig.LOG_TAG, "Silence level " + getSilenceLevel() + " sound level "
-                + soundLevel);
+        if (!isAboveSilenceLevel(soundLevel)) {
+            silenceHistory.add(soundLevel);
+            if (silenceHistory.size() == SILENCE_HISTORY_LENGTH) {
+                final double removedValue = silenceHistory.remove();
+                silenceHistorySum -= removedValue;
+            }
+            silenceHistorySum += soundLevel;
+            // TODO: remove all logs
+            // Log.i(SpeechTrainerConfig.LOG_TAG, "Silence level " + mean +
+            // " sound level "
+            // + soundLevel);
+            silenceLevel = mean() + SILENCE_LEAVE_MARGIN;
+        } else {
+            silenceLevel = mean() + SILENCE_ENTER_MARGIN;
+            // Log.i(SpeechTrainerConfig.LOG_TAG, "Silence level " + mean +
+            // " sound level "
+            // + soundLevel);
+        }
     }
 
-    public boolean isAboveSilenceLevel(double bufferSoundLevel) {
-        return bufferSoundLevel > getSilenceLevel();
+    public boolean isAboveSilenceLevel(double soundLevel) {
+        return soundLevel > silenceLevel;
     }
 
-    private double getSilenceLevel() {
-        return recentSoundLevels.getMin() + SILENCE_LEVEL_MARGIN;
+    private double mean() {
+        return silenceHistorySum / silenceHistory.size();
     }
 }
