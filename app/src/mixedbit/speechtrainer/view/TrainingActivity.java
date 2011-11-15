@@ -35,6 +35,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -44,6 +45,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 /**
  * Interacts with the user during the training session. Updates the UI in
@@ -67,9 +69,9 @@ AudioEventListener {
     // Plots recently recorded and played buffers. Invalidated each time a new
     // buffer is recorded or played.
     private AudioEventView audioEventView;
-    // View that is enabled when recording starts and disabled when recording
-    // ends.
-    private ImageView recordStatusView;
+    // View that displays device that is active (microphone, speaker or
+    // nothing).
+    private ImageView activeDeviceView;
     // Elements that are used only during interactive training (recordButton is
     // actually audioEventView, alias is provided for clarity).
     private ImageButton recordButton;
@@ -85,8 +87,7 @@ AudioEventListener {
         // is by default.
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-        recordStatusView = (ImageView) findViewById(R.id.recordStatusView);
-        recordStatusView.setEnabled(false);
+        activeDeviceView = (ImageView) findViewById(R.id.activeDeviceView);
 
         // audioEvenCollector should pass received audio events to this
         // activity.
@@ -133,6 +134,10 @@ AudioEventListener {
         // Can be null when the controller initialization failed.
         if (activeTrainingController != null) {
             activeTrainingController.startTraining();
+            final boolean tooltipEnabled = this.sharedPreferences.getBoolean("showTooltip", true);
+            if (tooltipEnabled) {
+                showTooltip();
+            }
         }
     }
 
@@ -185,10 +190,29 @@ AudioEventListener {
 
     @Override
     public void playingStarted() {
+        activeDeviceView.post(new Runnable() {
+            @Override
+            public void run() {
+                // Show the speaker image.
+                activeDeviceView.setImageResource(R.drawable.speaker);
+                activeDeviceView.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override
     public void playingStopped() {
+        activeDeviceView.post(new Runnable() {
+            @Override
+            public void run() {
+                if (activeTrainingController == interactiveTrainingController) {
+                    // Hide the speaker image, but only in the interactive mode.
+                    // In the automatic mode recording starts immediately and
+                    // hiding the speaker image causes unnecessary blinking.
+                    activeDeviceView.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     // Request the plot with audio events to be redrawn when a buffer is played
@@ -207,22 +231,20 @@ AudioEventListener {
     // recordStatusView should be enabled only when recording is in progress.
     @Override
     public void recordingStarted() {
-        recordStatusView.post(new Runnable() {
+        activeDeviceView.post(new Runnable() {
             @Override
             public void run() {
-                recordStatusView.setEnabled(true);
+                // Show the microphone image.
+                activeDeviceView.setImageResource(R.drawable.microphone);
+                activeDeviceView.setVisibility(View.VISIBLE);
             }
         });
     }
 
     @Override
     public void recordingStopped() {
-        recordStatusView.post(new Runnable() {
-            @Override
-            public void run() {
-                recordStatusView.setEnabled(false);
-            }
-        });
+        // Do not hide the microphone image. In both modes, playing starts
+        // immediately after final recording has stopped.
     }
 
     // When recording fails, the TrainingActivity is terminated.
@@ -245,6 +267,18 @@ AudioEventListener {
             // played after the training was stopped.
             audioEventCollector.resetHistory();
         }
+    }
+
+    private void showTooltip() {
+        String tooltipText = null;
+        if (activeTrainingController == interactiveTrainingController) {
+            tooltipText = getString(R.string.interactiveTrainingTooltip);
+        } else {
+            tooltipText = getString(R.string.automaticTrainingTooltip);
+        }
+        final Toast toast = Toast.makeText(getApplicationContext(), tooltipText, Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast.show();
     }
 
     private void displayErrorAndFinishActivity(String errorMessage) {
@@ -312,6 +346,7 @@ AudioEventListener {
             recordButton.setEnabled(true);
             replayButton.setVisibility(View.VISIBLE);
             horizontalDividerView.setVisibility(View.VISIBLE);
+            activeDeviceView.setVisibility(View.GONE);
         }
     }
 
