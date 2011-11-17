@@ -196,8 +196,8 @@ public class SilenceFilterTest extends TestCase {
         final int singleSilenceBufferLengthMs = SilenceFilter.TRAILING_SILENCE_TO_DROP_MS / 10;
 
         for (int silenceBuffersCombinedLengthMs = 0;
-        silenceBuffersCombinedLengthMs < SilenceFilter.LONG_SILENCE_INTERVAL_MS;
-        silenceBuffersCombinedLengthMs += singleSilenceBufferLengthMs) {
+            silenceBuffersCombinedLengthMs < SilenceFilter.LONG_SILENCE_INTERVAL_MS;
+            silenceBuffersCombinedLengthMs += singleSilenceBufferLengthMs) {
             expectSoundBelowSilenceLevel(soundLevelBelowSilence);
         }
         replayAll();
@@ -211,9 +211,9 @@ public class SilenceFilterTest extends TestCase {
         // Filter several short buffers below silence level with combined length
         // smaller than LONG_SILENCE_INTERVAL_MS.
         for (int silenceBuffersCombinedLengthMs = 0;
-        silenceBuffersCombinedLengthMs + singleSilenceBufferLengthMs
-        < SilenceFilter.LONG_SILENCE_INTERVAL_MS;
-        silenceBuffersCombinedLengthMs += singleSilenceBufferLengthMs) {
+            silenceBuffersCombinedLengthMs + singleSilenceBufferLengthMs
+                < SilenceFilter.LONG_SILENCE_INTERVAL_MS;
+            silenceBuffersCombinedLengthMs += singleSilenceBufferLengthMs) {
             result = silenceFilter.filterRecorderBuffer(soundLevelBelowSilence,
                     BufferLengthMsToShorts(singleSilenceBufferLengthMs));
             assertEquals(Action.ACCEPT_BUFFER, result.getAction());

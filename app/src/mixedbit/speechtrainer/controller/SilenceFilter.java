@@ -114,7 +114,7 @@ class SilenceFilter {
     public static final int MIN_LENGTH_OF_MEANINGFUL_DATA_TO_PLAY_MS = 150;
     // When accepted data is played, trailing buffers of combined length that is
     // larger or equal to TRAILING_SILENCE_TO_DROP_MS are dropped.
-    public static final int TRAILING_SILENCE_TO_DROP_MS = 70;
+    public static final int TRAILING_SILENCE_TO_DROP_MS = 20;
 
     private final SilenceLevelDetector silenceLevelDetector;
     // The combined length of all buffers above silence level since the last
