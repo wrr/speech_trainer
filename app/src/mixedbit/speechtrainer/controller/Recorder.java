@@ -18,10 +18,8 @@
 
 package mixedbit.speechtrainer.controller;
 
-import mixedbit.speechtrainer.SpeechTrainerConfig;
 import mixedbit.speechtrainer.controller.AudioBufferAllocator.AudioBuffer;
 import android.media.AudioRecord;
-import android.util.Log;
 
 /**
  * Wrapper over AudioRecord that exposes minimal interface for recording
@@ -86,7 +84,6 @@ class RecorderImpl implements Recorder {
         while (totalReadDataLength < audioData.length) {
             final int readDataLength = audioRecord.read(audioData, totalReadDataLength,
                     audioData.length - totalReadDataLength);
-            Log.i(SpeechTrainerConfig.LOG_TAG, "recorded " + readDataLength + " shorts.");
             if (readDataLength <= 0) {
                 // Even if buffer was partially read, discard recorded data and
                 // return an error.

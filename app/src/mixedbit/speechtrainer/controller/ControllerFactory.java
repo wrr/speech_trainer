@@ -28,7 +28,6 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder.AudioSource;
-import android.util.Log;
 
 /**
  * Creates training controllers. It is OK to create multiple controllers with
@@ -147,7 +146,6 @@ public class ControllerFactory {
                 SpeechTrainerConfig.SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_CONFIGURATION_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        Log.i(SpeechTrainerConfig.LOG_TAG, "Audio buffer size " + audioTrackBufferSizeInBytes);
         if (audioTrackBufferSizeInBytes <= 0) {
             throw new InitializationException("Failed to initialize playback.");
         }

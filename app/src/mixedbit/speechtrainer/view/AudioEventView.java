@@ -59,7 +59,6 @@ public class AudioEventView extends ImageButton {
         this.audioEventHistory = audioEventHistory;
     }
 
-
     @Override
     protected void onDraw(Canvas canvas) {
         final int viewWidth = getWidth();

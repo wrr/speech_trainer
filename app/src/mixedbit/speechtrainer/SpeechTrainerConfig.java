@@ -34,9 +34,6 @@ public class SpeechTrainerConfig {
     public static final int SINGLE_AUDIO_BUFFER_SIZE_IN_SHORTS = 1000;
     public static final int NUMBER_OF_AUDIO_BUFFERS = 3000;
 
-    // Tag used in calls to Log.*.
-    public static final String LOG_TAG = "SpeechTrainer";
-
     // Approximate number of audio buffers needed to store a second of sound.
     public static int numberOfBuffersPerSecond() {
         return SAMPLE_RATE_HZ / SINGLE_AUDIO_BUFFER_SIZE_IN_SHORTS;

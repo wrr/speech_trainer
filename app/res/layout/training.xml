@@ -14,7 +14,7 @@
 <ImageView android:id="@+id/activeDeviceView" android:src="@drawable/microphone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="right"/>
 </FrameLayout>
 
-<View android:id="@+id/horizontalDividerView" android:background="@android:drawable/divider_horizontal_bright" android:layout_width="fill_parent" android:layout_height="2dp" />
+<View android:id="@+id/horizontalDividerView" android:background="#FF404040" android:layout_width="fill_parent" android:layout_height="2dp" />
 
 <ImageButton android:id="@+id/replayButton" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="0" android:src="@drawable/replay" android:background="#00000000"></ImageButton>
 

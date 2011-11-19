@@ -80,16 +80,9 @@ class SilenceLevelDetector {
                 silenceHistorySum -= removedValue;
             }
             silenceHistorySum += soundLevel;
-            // TODO: remove all logs
-            // Log.i(SpeechTrainerConfig.LOG_TAG, "Silence level " + mean +
-            // " sound level "
-            // + soundLevel);
             silenceLevel = mean() + SILENCE_LEAVE_MARGIN;
         } else {
             silenceLevel = mean() + SILENCE_ENTER_MARGIN;
-            // Log.i(SpeechTrainerConfig.LOG_TAG, "Silence level " + mean +
-            // " sound level "
-            // + soundLevel);
         }
     }
 
