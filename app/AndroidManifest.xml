@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="mixedbit.speechtrainer"
       android:debuggable="false"
-      android:versionCode="1"
-      android:versionName="1.0">
+      android:versionCode="2"
+      android:versionName="1.01">
     <!-- The app could run on sdk version 3, but than it would require WRITE_EXTERNAL_STORAGE and 
         READ_PHONE_STATE permissions (any application targeting 3.0 or earlier is assumed 
         to need such permissions). -->  

@@ -183,7 +183,6 @@ AudioEventListener {
                         getString(R.string.aboutTitleSuffix));
                 startActivity(aboutIntent);
                 break;
-
         }
         return true;
     }
