@@ -33,6 +33,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.Gravity;
@@ -182,6 +183,11 @@ AudioEventListener {
                 aboutIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
                         getString(R.string.aboutTitleSuffix));
                 startActivity(aboutIntent);
+                break;
+            case R.id.rateMenuItem:
+                final Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                        Uri.parse("market://details?id=mixedbit.speechtrainer"));
+                startActivity(browserIntent);
                 break;
         }
         return true;
