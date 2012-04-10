@@ -20,6 +20,6 @@
    <string name="showTooltipTitle">Mostrar consejos</string>
    <string name="showTooltipSummary">Mostrar consejos al principio del entrenamiento.</string>
    <string name="interactiveTrainingTooltip">Pulse y mantenga para grabar, suelte para reproducir.</string>
-   <string name="automaticTrainingTooltip">Diga algo y espera a que sea reproducido.</string>
+   <string name="automaticTrainingTooltip">Diga algo y espere a que sea reproducido.</string>
    <string name="rateLink">Valorar</string>
 </resources>
