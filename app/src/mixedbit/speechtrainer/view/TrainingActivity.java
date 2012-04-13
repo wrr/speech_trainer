@@ -172,20 +172,22 @@ AudioEventListener {
                 break;
             case R.id.helpMenuItem:
                 final Intent helpIntent = new Intent(this, FileViewerActivity.class);
-                helpIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY, "help.html");
+                helpIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY,
+                        getString(R.string.helpFile));
                 helpIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
                         getString(R.string.helpTitleSuffix));
                 startActivity(helpIntent);
                 break;
             case R.id.aboutMenuItem:
                 final Intent aboutIntent = new Intent(this, FileViewerActivity.class);
-                aboutIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY, "about.html");
+                aboutIntent.putExtra(FileViewerActivity.FILE_TO_DISPLAY,
+                        getString(R.string.aboutFile));
                 aboutIntent.putExtra(FileViewerActivity.WINDOW_TITLE_SUFFIX,
                         getString(R.string.aboutTitleSuffix));
                 startActivity(aboutIntent);
                 break;
             case R.id.rateMenuItem:
-                final Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                final Intent browserIntent = new Intent(Intent.ACTION_VIEW,
                         Uri.parse("market://details?id=mixedbit.speechtrainer"));
                 startActivity(browserIntent);
                 break;

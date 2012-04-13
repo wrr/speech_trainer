@@ -22,4 +22,6 @@
    <string name="interactiveTrainingTooltip">Pulse y mantenga para grabar, suelte para reproducir.</string>
    <string name="automaticTrainingTooltip">Diga algo y espere a que sea reproducido.</string>
    <string name="rateLink">Valorar</string>
+   <string name="aboutFile">about_es.html</string>
+   <string name="helpFile">help_es.html</string>
 </resources>

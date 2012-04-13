@@ -15,4 +15,6 @@
     <string name="interactiveTrainingTooltip">Push and hold to record, release to play.</string>
     <string name="automaticTrainingTooltip">Say something and wait for it to be played.</string>
     <string name="rateLink">Rate</string>
+    <string name="aboutFile">about.html</string>
+    <string name="helpFile">help.html</string>
 </resources>
