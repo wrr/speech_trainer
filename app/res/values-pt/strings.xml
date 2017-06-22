@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Speech Trainer</string>
+    <string name="speechDetectionTitle">Modo de detecção de fala</string>
+    <string name="speechDetecionSummary">Mudar automaticamente entre
+    gravação e reprodução.</string>
+    <string name="settingsTitle">Speech Trainer - configurações</string>
+    <string name="settingsLink">Configurações</string>
+    <string name="aboutTitleSuffix">sobre</string>
+    <string name="aboutLink">Sobre</string>
+    <string name="helpLink">Ajuda</string>
+    <string name="helpTitleSuffix">ajuda</string>
+    <string name="closeButton">Fechar</string>
+    <string name="showTooltipTitle">Mostrar dicas</string>
+    <string name="showTooltipSummary">Exibir dicas no início de um
+    treinamento.</string>
+    <string name="interactiveTrainingTooltip">Pressione e segure para
+    gravar, solte para reproduzir.</string>
+    <string name="automaticTrainingTooltip">Diga algo e espere a
+    reprodução.</string>
+    <string name="rateLink">Avaliar</string>
+    <string name="aboutFile">about_ptbr.html</string>
+    <string name="helpFile">help_ptbr.html</string>
+</resources>
