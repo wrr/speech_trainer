@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Speech Trainer</string>
+    <string name="speechDetectionTitle">Spraakdetectiemodus</string>
+    <string name="speechDetecionSummary">wissel automatisch tussen opnemen en afspelen.</string>
+    <string name="settingsTitle">Speech Trainer - instellingen</string>
+    <string name="settingsLink">Instellingen</string>
+    <string name="aboutTitleSuffix">over</string>
+    <string name="aboutLink">Over</string>
+    <string name="helpLink">Help</string>
+    <string name="helpTitleSuffix">help</string>
+    <string name="closeButton">Sluit</string>
+    <string name="showTooltipTitle">Toon hints</string>
+    <string name="showTooltipSummary">Toon hints aan het begin van een training.</string>
+    <string name="interactiveTrainingTooltip">Druk en hou vast om op te nemen, laat los om af te spelen.</string>
+    <string name="automaticTrainingTooltip">Zeg iets en wacht tot het wordt afgespeeld.</string>
+    <string name="rateLink">Beoordeel</string>
+    <string name="aboutFile">about-nl.html</string>
+    <string name="helpFile">help-nl.html</string>
+</resources>
